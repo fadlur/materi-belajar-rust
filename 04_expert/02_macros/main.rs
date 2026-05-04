@@ -8,7 +8,18 @@
 // 1. Declarative macros (macro_rules!) — pattern matching pada kode
 // 2. Procedural macros — manipulasi token stream (lebih advanced)
 //
-// Kita fokus pada declarative macros yang paling umum dipakai.
+// 🎯 Tujuan: Memahami declarative macros dan cara menggunakannya
+//    untuk mengurangi boilerplate kode.
+//
+// 💡 Analogi Utama:
+// Macro seperti PHOTOCOPY CANGGIH — kamu buat template (macro),
+//    lalu mesin fotocopy otomatis mengisi template dengan data
+//    yang berbeda-beda saat compile time. Hasilnya: banyak kode
+//    spesifik tanpa harus menulis satu per satu.
+//
+// 🔑 Macro berbeda dari fungsi: macro di-expand saat compile,
+//    bukan dipanggil saat runtime. Ini memungkinkan fleksibilitas
+//    syntax yang tidak mungkin dengan fungsi biasa.
 // ============================================================
 
 // ══════════════════════════════════════════════════════════════
@@ -302,19 +313,48 @@ fn main() {
 }
 
 // ============================================================
-// 📝 FRAGMENT TYPES (untuk parameter macro):
+// 🧠 RINGKUMAN MACROS:
 //
-// $x:expr     → expression (42, "halo", a + b)
-// $x:ident    → identifier (nama variabel/fungsi/struct)
-// $x:ty       → type (i32, String, Vec<T>)
-// $x:pat      → pattern (Some(x), (a, b), _)
-// $x:stmt     → statement (let x = 5;)
-// $x:block    → block ({ ... })
-// $x:item     → item (fn, struct, impl, use)
-// $x:meta     → meta item (derive(Debug))
-// $x:tt       → token tree (anything — paling fleksibel)
-// $x:literal  → literal (42, "halo", true)
-// $x:path     → path (std::collections::HashMap)
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    DECLARATIVE MACRO                        │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Definisi         │ macro_rules! nama { (pattern) => {…} }  │
+// │ Parameter        │ $nama:fragmen_type                       │
+// │ Repetition       │ $( … ),* atau $( … ),+                    │
+// │ Optional         │ $( … )?                                  │
+// │ Separator        │ , ; + => (bisa custom)                   │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    FRAGMENT TYPES                           │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ $x:expr          │ Expression (42, "halo", a + b)           │
+// │ $x:ident         │ Identifier (nama variabel/fungsi/struct) │
+// │ $x:ty            │ Type (i32, String, Vec<T>)               │
+// │ $x:pat           │ Pattern (Some(x), (a, b), _)             │
+// │ $x:stmt          │ Statement (let x = 5;)                   │
+// │ $x:block         │ Block ({ ... })                          │
+// │ $x:item          │ Item (fn, struct, impl, use)             │
+// │ $x:meta          │ Meta item (derive(Debug))                │
+// │ $x:tt            │ Token tree (anything — paling fleksibel) │
+// │ $x:literal       │ Literal (42, "halo", true)               │
+// │ $x:path          │ Path (std::collections::HashMap)         │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Macro expansion yang tidak terduga → debug dengan cargo expand
+// - Recursive macro tanpa base case → infinite recursion
+// - Hygiene issue (variable names collide)
+// - Pattern yang overlap → macro pilih yang pertama cocok
+// - Lupa ; setelah macro call (kadang perlu, kadang tidak)
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C                | Lisp              |
+// |-------------------|------------------|-------------------|
+// | macro_rules!      | #define          │ defmacro          │
+// | compile-time      │ preprocessor     │ compile-time      │
+// | hygienic          │ not hygienic     │ hygienic          │
+// | pattern matching  │ text substitution│ code-as-data      │
 // ============================================================
 
 // ============================================================
@@ -326,4 +366,5 @@ fn main() {
 //    untuk struct apapun
 // 5. Buat macro `match_str!` yang membuat string matching
 //    case-insensitive
+// 6. Buat macro recursive untuk menghitung factorial saat compile
 // ============================================================

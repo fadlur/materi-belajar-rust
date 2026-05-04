@@ -4,6 +4,18 @@
 // Generics memungkinkan kita menulis kode yang bekerja
 // untuk BANYAK tipe data — tanpa duplikasi kode.
 // Mirip template di C++ atau generics di Java/TypeScript.
+//
+// 🎯 Tujuan: Memahami generic functions, structs, enums,
+//    trait bounds, where clauses, dan monomorphization.
+//
+// 💡 Analogi Utama:
+// Generics seperti RESEP MASAKAN yang fleksibel. Resep "Tumis"
+//    bisa dipakai untuk tumis kangkung, tumis bayam, atau tumis
+//    kacang panjang — bahan dasarnya beda, tapi langkahnya sama.
+//
+// 🔑 Keunggulan Rust: Zero-cost abstraction — generics di-compile
+//    menjadi kode spesifik untuk setiap tipe, jadi tidak ada
+//    runtime overhead sama sekali!
 // ============================================================
 
 use std::fmt;
@@ -14,8 +26,10 @@ fn main() {
     // fn terbesar_i32(list: &[i32]) -> &i32 { ... }
     // fn terbesar_f64(list: &[f64]) -> &f64 { ... }
     // fn terbesar_char(list: &[char]) -> &char { ... }
+    //
+    // 💡 Dengan generics: SATU fungsi untuk SEMUA tipe!
+    //    <T> adalah "type parameter" — placeholder untuk tipe apa pun.
 
-    // Dengan generics: satu fungsi untuk semua!
     let angka = vec![34, 50, 25, 100, 65];
     println!("Terbesar: {}", terbesar(&angka));
 
@@ -26,6 +40,7 @@ fn main() {
     println!("Terbesar: {}", terbesar(&desimal));
 
     // ── GENERIC STRUCT ──────────────────────────────────────
+    // Struct bisa punya type parameter — fleksibel untuk banyak tipe!
     let titik_int = Titik { x: 5, y: 10 };
     let titik_float = Titik { x: 1.5, y: 4.2 };
     let titik_campur = TitikCampur { x: 5, y: 3.14 };
@@ -63,7 +78,10 @@ fn main() {
     }
 
     // ── TRAIT BOUNDS PADA GENERICS ──────────────────────────
-    // Kita bisa membatasi generic hanya untuk tipe yang implement trait tertentu
+    // Kita bisa membatasi generic hanya untuk tipe yang implement trait tertentu.
+    // Tanpa trait bound, generic bisa melakukan sangat sedikit —
+    // hanya move dan drop. Trait bounds memungkinkan kita menggunakan
+    // method dari trait tersebut.
 
     cetak_item(42);
     cetak_item("halo");
@@ -74,6 +92,7 @@ fn main() {
     cetak_detail(&"halo");
 
     // ── GENERIC DENGAN WHERE CLAUSE ─────────────────────────
+    // Where clause lebih rapi untuk bound yang kompleks
     let a = Wrapper::new(10);
     let b = Wrapper::new(20);
     println!("a lebih besar? {}", a.lebih_besar(&b));
@@ -106,6 +125,10 @@ fn main() {
     // Rust menggunakan "monomorphization" saat compile:
     // Generic di-expand menjadi kode spesifik untuk setiap tipe.
     // Jadi TIDAK ADA runtime overhead! Sama cepatnya dengan kode non-generic.
+    //
+    // 💡 Analogi: Monomorphization seperti photocopy resep dengan
+    //    bahan spesifik — untuk setiap bahan, buat resep tersendiri.
+    //    Tidak perlu "cek bahan saat masak" (runtime check).
     //
     // Misal: terbesar(&angka) → Rust generate terbesar_i32()
     //        terbesar(&huruf) → Rust generate terbesar_char()
@@ -262,6 +285,38 @@ impl<T: fmt::Display + PartialOrd> Pair<T> {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN GENERICS:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    GENERIC SYNTAX                           │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Function         │ fn nama<T>(x: T) -> T                   │
+// │ Struct           │ struct Nama<T> { field: T }              │
+// │ Enum             │ enum Nama<T> { Variant(T) }              │
+// │ Method           │ impl<T> Nama<T> { ... }                  │
+// │ Trait Bound      │ <T: Trait>                               │
+// │ Multiple Bounds  │ <T: TraitA + TraitB>                     │
+// │ Where Clause     │ fn f<T>(x: T) where T: Trait             │
+// │ Concrete Impl    │ impl Nama<i32> { ... }                   │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Generic tanpa trait bound → tidak bisa panggil method
+// - Conflicting impl (sama untuk tipe yang overlap) → compile error
+// - Lupa <T> di impl block → compile error
+// - Trait bound tidak terpenuhi oleh pemanggil → compile error
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C++              | Java              |
+// |-------------------|------------------|-------------------|
+// | <T>               | <typename T>     | <T>               |
+// | trait bound       | concept (C++20)  | extends           |
+// | where clause      | requires         | where             |
+// | monomorphization  | template         | type erasure      |
+// | zero-cost         | zero-cost        | boxing (cost)     |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat generic function `min` yang return nilai terkecil dari slice
 // 2. Buat generic struct `Queue<T>` dengan enqueue dan dequeue
@@ -269,4 +324,5 @@ impl<T: fmt::Display + PartialOrd> Pair<T> {
 //    return Vec elemen yang memenuhi kondisi
 // 4. Buat generic struct `Cache<K, V>` dengan get dan set
 // 5. Buat generic binary search function
+// 6. Implement generic `swap` untuk tuple (T, U) → (U, T)
 // ============================================================

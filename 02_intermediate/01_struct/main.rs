@@ -4,10 +4,25 @@
 // Struct adalah cara untuk mengelompokkan data terkait menjadi
 // satu tipe custom. Mirip class di OOP, tapi tanpa inheritance.
 // Rust punya 3 jenis struct: named, tuple, dan unit struct.
+//
+// 🎯 Tujuan: Memahami cara mendefinisikan struct, method,
+//    associated functions, dan berbagai pola penggunaan struct.
+//
+// 💡 Analogi Utama:
+// Struct seperti FORMULIR — setiap field adalah kolom yang
+// harus diisi. Kalau formulir pendaftaran, ada kolom nama,
+// email, umur, dll. Struct mengelompokkan data terkait
+// sehingga lebih mudah dibawa dan diproses bersama.
+//
+// 🔑 Di Rust, struct adalah fondasi OOP. Tidak ada class,
+//    tapi struct + impl + trait mencakup kebutuhan OOP.
 // ============================================================
 
 // ── NAMED STRUCT ────────────────────────────────────────────
-// Struct paling umum — setiap field punya nama dan tipe
+// Struct paling umum — setiap field punya nama dan tipe.
+//
+// 💡 Analogi: Named struct seperti formulir dengan label jelas
+//    di setiap kolom — "Nama:", "Email:", "Umur:", dll.
 #[derive(Debug)] // derive Debug agar bisa di-print dengan {:?}
 struct Pengguna {
     nama: String,
@@ -18,7 +33,11 @@ struct Pengguna {
 
 // ── TUPLE STRUCT ────────────────────────────────────────────
 // Struct tanpa nama field — akses pakai index (.0, .1, .2)
-// Berguna untuk membuat "newtype" — tipe baru dari tipe yang ada
+// Berguna untuk membuat "newtype" — tipe baru dari tipe yang ada.
+//
+// 💡 Analogi: Tuple struct seperti nomor antrian — tidak ada
+//    label, hanya posisi. "Antrian nomor 0, 1, 2..."
+//    Berguna saat nama field tidak penting, tapi tipe perlu dibedakan.
 #[derive(Debug)]
 struct Warna(u8, u8, u8); // RGB
 
@@ -27,13 +46,24 @@ struct Titik(f64, f64); // koordinat X, Y
 
 // ── UNIT STRUCT ─────────────────────────────────────────────
 // Struct tanpa field — berguna untuk trait implementation
+// atau sebagai marker/type tag.
+//
+// 💡 Analogi: Unit struct seperti stempel kosong — tidak ada
+//    data, tipe-nya sendiri bisa digunakan sebagai penanda.
 struct Penanda;
 
 // ── IMPL BLOCK: METHODS & ASSOCIATED FUNCTIONS ──────────────
 // `impl` mendefinisikan method (fungsi yang terkait dengan struct)
+//
+// 💡 Analogi: impl block seperti "manual penggunaan" untuk
+//    sebuah produk — di sini kita definisikan apa saja yang
+//    bisa dilakukan dengan struct ini.
 impl Pengguna {
     // Associated function (seperti static method di bahasa lain)
     // Dipanggil dengan `Pengguna::baru(...)` — tanpa `self`
+    //
+    // 💡 Analogi: Associated function seperti "konstruksi pabrik" —
+    //    cara standar membuat objek baru.
     fn baru(nama: String, email: String, umur: u32) -> Pengguna {
         Pengguna {
             nama,   // shorthand: kalau nama field = nama variabel
@@ -45,6 +75,9 @@ impl Pengguna {
 
     // Method — parameter pertama SELALU `self` (dalam berbagai bentuk)
     // `&self` = immutable reference ke instance
+    //
+    // 💡 Analogi: Method seperti kemampuan/objek. "Pengguna bisa
+    //    menyapa", "Pengguna bisa dinonaktifkan", dll.
     fn salam(&self) -> String {
         format!("Halo, nama saya {} ({})", self.nama, self.email)
     }
@@ -79,6 +112,8 @@ impl Pengguna {
 }
 
 // Bisa punya MULTIPLE impl block untuk satu struct
+// Ini berguna untuk mengorganisir kode — misalnya impl untuk
+// trait terpisah, atau impl untuk method publik vs internal.
 impl Pengguna {
     fn ganti_nama(&mut self, nama_baru: &str) {
         self.nama = nama_baru.to_string();
@@ -89,6 +124,7 @@ impl Pengguna {
 impl Titik {
     fn baru(x: f64, y: f64) -> Self {
         // `Self` = alias untuk tipe struct ini (Titik)
+        // Lebih singkat dan bisa digunakan kalau nama struct berubah
         Self(x, y)
     }
 
@@ -105,6 +141,7 @@ impl Titik {
 
 // ── STRUCT DENGAN LIFETIME (preview — detail di advanced) ───
 // Kalau struct menyimpan reference, butuh lifetime annotation
+// untuk memberitahu compiler berapa lama reference valid.
 #[derive(Debug)]
 struct Kutipan<'a> {
     teks: &'a str,
@@ -113,6 +150,7 @@ struct Kutipan<'a> {
 
 fn main() {
     // ── MEMBUAT INSTANCE STRUCT ─────────────────────────────
+    // Cara 1: Inisialisasi field satu per satu
     let user1 = Pengguna {
         nama: String::from("Budi"),
         email: String::from("budi@email.com"),
@@ -121,7 +159,7 @@ fn main() {
     };
     println!("{:?}", user1);
 
-    // Menggunakan associated function (constructor)
+    // Cara 2: Menggunakan associated function (constructor)
     let user2 = Pengguna::baru(
         String::from("Ani"),
         String::from("ani@email.com"),
@@ -130,21 +168,27 @@ fn main() {
     user2.info();
 
     // ── AKSES FIELD ─────────────────────────────────────────
+    // Akses field dengan dot notation: instance.field
     println!("Nama: {}", user2.nama);
     println!("Dewasa: {}", user2.sudah_dewasa());
 
     // ── MENGUBAH FIELD (harus mut) ──────────────────────────
+    // Struct harus mutable (`mut`) untuk bisa mengubah field.
+    // Rust tidak mengizinkan mutable field di immutable struct!
     let mut user3 = Pengguna::baru(
         String::from("Cici"),
         String::from("cici@email.com"),
         16,
     );
-    user3.umur = 17;
-    user3.nonaktifkan();
+    user3.umur = 17;           // ubah field langsung
+    user3.nonaktifkan();       // panggil method mutable
     user3.info();
 
     // ── STRUCT UPDATE SYNTAX ────────────────────────────────
     // Buat struct baru berdasarkan yang lama — sisanya di-copy/move
+    //
+    // 💡 Analogi: Update syntax seperti "salin formulir lama,
+    //    ganti beberapa kolom, sisanya tetap sama."
     let user4 = Pengguna {
         nama: String::from("Dedi"),
         email: String::from("dedi@email.com"),
@@ -155,6 +199,8 @@ fn main() {
     user4.info();
 
     // ── METHOD CHAINING (Builder Pattern) ───────────────────
+    // Method yang return self (atau Self) bisa di-chain.
+    // Pola ini sangat umum di Rust (contoh: String, Iterator).
     let user5 = Pengguna::baru(
         String::from("Eka"),
         String::from("eka@old.com"),
@@ -182,6 +228,7 @@ fn main() {
     println!("\"{}\" — {}", kutipan.teks, kutipan.penulis);
 
     // ── DESTRUCTURING STRUCT ────────────────────────────────
+    // Bongkar struct ke variabel terpisah
     let Titik(x, y) = p1;
     println!("x = {}, y = {}", x, y);
 
@@ -208,6 +255,46 @@ fn main() {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN STRUCT:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    JENIS STRUCT                             │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Named Struct     │ struct Foo { x: i32, y: i32 }            │
+// │                  │ Akses: foo.x, foo.y                      │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Tuple Struct     │ struct Point(f64, f64)                   │
+// │                  │ Akses: point.0, point.1                  │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Unit Struct      │ struct Marker;                           │
+// │                  │ Tidak ada field                          │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    SELF PARAMETER                            │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ &self            │ Immutable borrow — baca saja             │
+// │ &mut self        │ Mutable borrow — bisa baca & tulis       │
+// │ self             │ Take ownership — konsumsi instance       │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Lupa `mut` pada struct saat perlu mengubah field
+// - Akses field setelah move (struct update syntax)
+// - Lupa derive Debug untuk print dengan {:?}
+// - Campur reference dan owned data tanpa lifetime
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Python           | JavaScript        |
+// |-------------------|------------------|-------------------|
+// | struct            | class / dataclass| class / object    |
+// | impl              | def method       | prototype method  |
+// | Self::new()       | __init__         | constructor       |
+// | &self             | self             | this              |
+// | derive(Debug)     | __repr__         | toString          |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat struct `Persegi` dengan field `sisi: f64` dan method
 //    `luas()` dan `keliling()`
@@ -217,4 +304,6 @@ fn main() {
 //    dan punya method tambah, kurang, kali, bagi
 // 4. Implementasikan builder pattern untuk struct yang kompleks
 // 5. Buat struct `Matrix2x2` dan implementasikan perkalian matrix
+// 6. Buat tuple struct untuk `Meter(f64)` dan `Kilometer(f64)`
+//    yang tidak bisa tertukar (type safety!)
 // ============================================================

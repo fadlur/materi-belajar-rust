@@ -4,9 +4,22 @@
 // Enum di Rust JAUH lebih powerful dari enum di bahasa lain.
 // Setiap variant bisa menyimpan data dengan tipe berbeda!
 // Digabung dengan `match`, ini jadi salah satu fitur terkuat Rust.
+//
+// 🎯 Tujuan: Memahami enum dengan data, pattern matching,
+//    Option<T>, Result<T,E>, dan berbagai teknik pattern matching.
+//
+// 💡 Analogi Utama:
+// Enum seperti KOTAK SURAT dengan beberapa slot — setiap slot
+// bisa berisi barang berbeda. Slot "Surat" berisi kertas,
+// slot "Paket" berisi kotak, slot "Kosong" tidak berisi apa-apa.
+//
+// Di Rust, enum tidak hanya label — setiap variant bisa
+// menyimpan data lengkap dengan tipe yang berbeda-beda!
 // ============================================================
 
 // ── ENUM SEDERHANA ──────────────────────────────────────────
+// Enum dasar — mirip enum di bahasa lain (C, Java)
+// Setiap variant adalah label tanpa data.
 #[derive(Debug)]
 enum Arah {
     Utara,
@@ -17,6 +30,13 @@ enum Arah {
 
 // ── ENUM DENGAN DATA ────────────────────────────────────────
 // Setiap variant bisa punya tipe data berbeda!
+//
+// 💡 Analogi: Bayangkan pesan dalam game — ada banyak jenis pesan,
+//    masing-masing butuh data berbeda:
+//    - "Keluar" → tidak perlu data
+//    - "Pindah" → butuh koordinat x, y
+//    - "Tulis" → butuh teks
+//    - "GantiWarna" → butuh RGB
 #[derive(Debug)]
 enum Pesan {
     Keluar,                          // tanpa data (unit variant)
@@ -40,6 +60,11 @@ impl Pesan {
 }
 
 // ── ENUM UNTUK STATE MACHINE ────────────────────────────────
+// Enum dengan data sangat cocok untuk state machine —
+// menggambarkan status sistem dengan data terkait.
+//
+// 💡 Analogi: Status pesanan di toko online — setiap status
+//    berbeda dan mungkin butuh informasi tambahan.
 #[derive(Debug)]
 enum StatusPesanan {
     Baru,
@@ -62,6 +87,8 @@ impl StatusPesanan {
 }
 
 // ── ENUM SEPERTI C-STYLE (DENGAN NILAI) ────────────────────
+// Enum bisa punya nilai integer eksplisit — berguna untuk
+// interoperabilitas dengan C atau definisi konstanta.
 #[derive(Debug)]
 enum HttpStatus {
     Ok = 200,
@@ -75,7 +102,14 @@ fn main() {
     println!("Arah: {:?}", arah);
 
     // ── MATCH — HARUS EXHAUSTIVE! ───────────────────────────
-    // Semua variant HARUS ditangani — compiler akan error kalau ada yang miss
+    // Semua variant HARUS ditangani — compiler akan error kalau ada yang miss!
+    //
+    // 💡 Analogi: Match seperti mesin sortir otomatis — setiap
+    //    paket HARUS masuk ke slot yang sesuai. Kalau ada paket
+    //    tanpa slot, mesin BERHENTI (compile error).
+    //
+    // 🔑 Ini PREVENTS BUGS! Kalau nanti enum ditambah variant baru,
+    //    compiler akan kasih tahu semua match yang perlu diperbarui.
     let instruksi = match arah {
         Arah::Utara => "Maju ke utara",
         Arah::Selatan => "Mundur ke selatan",
@@ -97,10 +131,18 @@ fn main() {
 
     // ── OPTION<T> — ENUM BAWAAN RUST ────────────────────────
     // Rust TIDAK punya null! Sebagai gantinya, ada Option<T>:
+    //
     // enum Option<T> {
     //     Some(T),   // ada nilai
     //     None,      // tidak ada nilai
     // }
+    //
+    // 💡 Analogi: Option seperti kotak yang bisa berisi barang
+    //    atau kosong. Kalau mau ambil barang, kamu HARUS cek
+    //    dulu apakah kotaknya kosong — tidak bisa asal ambil!
+    //
+    // 🔑 Keunggulan: Compiler memaksa kita menangani kasus None.
+    //    Tidak ada "null pointer exception" di Rust!
 
     let angka: Option<i32> = Some(42);
     let kosong: Option<i32> = None;
@@ -141,6 +183,11 @@ fn main() {
     //     Ok(T),    // berhasil, berisi nilai
     //     Err(E),   // gagal, berisi error
     // }
+    //
+    // 💡 Analogi: Result seperti amplop — ada amplop "Sukses" (hijau)
+    //    dan amplop "Gagal" (merah). Kamu harus buka amplop untuk
+    //    tahu isinya — dan compiler memastikan kamu menangani kedua
+    //    jenis amplop!
 
     let berhasil: Result<i32, String> = Ok(42);
     let gagal: Result<i32, String> = Err(String::from("ada error"));
@@ -191,6 +238,9 @@ fn main() {
 
     // ── IF LET & WHILE LET ─────────────────────────────────
     // Shortcut saat hanya peduli satu pattern
+    //
+    // 💡 Analogi: Kalau kamu hanya peduli amplop hijau dan
+    //    tidak peduli amplop merah, gunakan if let — lebih singkat!
 
     let mungkin_nama: Option<String> = Some(String::from("Budi"));
     if let Some(nama) = mungkin_nama {
@@ -263,6 +313,43 @@ impl Operasi {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN ENUM & PATTERN MATCHING:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    JENIS VARIANT ENUM                       │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Unit variant     │ Enum::Variant (tanpa data)               │
+// │ Tuple variant    │ Enum::Variant(T1, T2)                    │
+// │ Struct variant   │ Enum::Variant { field: T }               │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    OPTION<T> & RESULT<T,E>                  │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ Option<T>        │ Result<T, E>          │
+// ├──────────────────┼──────────────────┼───────────────────────┤
+// │ Sukses           │ Some(T)          │ Ok(T)                 │
+// │ Gagal            │ None             │ Err(E)                │
+// │unwrap_or(default)│ unwrap_or(T)     │ unwrap_or(T)          │
+// │unwrap_or_else    │ unwrap_or_else   │ unwrap_or_else        │
+// │map                │ map(|t| ...)     │ map(|t| ...)          │
+// └──────────────────┴──────────────────┴───────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - unwrap() tanpa handle Err/None → panic!
+// - Match tidak exhaustive → compile error (bagus!)
+// - Lupa `ref` atau `&` saat pattern match reference
+// - Asumsi Option selalu Some → gunakan match atau if let!
+//
+// 🔗 PERBANDINGAN NULL SAFETY:
+// | Rust (Option)     | Java (Optional)   | TypeScript        |
+// |-------------------|-------------------|-------------------|
+// | Some/None         | Optional.of/null  │ T | null/undefined|
+// | Compile-time check│ Runtime check     │ Compile (opt)     |
+// | match mandatory   │ ifPresent()       │ ?. operator       |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat enum `Bentuk` dengan Circle(radius), Rectangle(w,h),
 //    Triangle(base, height) dan method `luas()`
@@ -272,4 +359,6 @@ impl Operasi {
 // 4. Implementasikan linked list sederhana menggunakan enum
 // 5. Buat fungsi yang menerima Vec<Option<i32>> dan return
 //    jumlah semua Some values (skip None)
+// 6. Gunakan let else untuk unwrap Option<&str>
+// 7. Buat enum Message dengan method broadcast()
 // ============================================================

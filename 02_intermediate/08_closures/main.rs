@@ -4,11 +4,31 @@
 // Closure = anonymous function yang bisa "menangkap" (capture)
 // variabel dari lingkungan sekitarnya.
 // Mirip lambda di Python/Java, arrow function di JavaScript.
+//
+// 🎯 Tujuan: Memahami sintaks closure, capturing environment,
+//    tiga trait closure (Fn, FnMut, FnOnce), dan penggunaan
+//    closure dengan iterator methods.
+//
+// 💡 Analogi Utama:
+// Closure seperti RUMAH dengan MEMORI — setiap closure "mengingat"
+// variabel dari tempat ia dibuat. Kalau kamu membuat closure di
+// dalam fungsi, closure itu bisa mengakses variabel fungsi tersebut
+// bahkan setelah fungsi selesai (kalau di-move ke luar).
+//
+// 🔑 Closures sangat powerful di Rust karena mereka:
+//   1. Bisa capture environment
+//   2. Bisa dipassing sebagai parameter
+//   3. Bisa di-return dari fungsi
+//   4. Bekerja seamlessly dengan iterators
 // ============================================================
 
 fn main() {
     // ── SINTAKS CLOSURE ─────────────────────────────────────
     // Closure didefinisikan dengan `|parameter| body`
+    //
+    // 💡 Analogi: Closure seperti memo kecil yang bisa menyimpan
+    //    catatan dari meja kerja — dan catatan itu bisa dibawa
+    //    ke mana pun closure pergi.
 
     // Closure sederhana
     let sapa = |nama: &str| println!("Halo, {}!", nama);
@@ -33,16 +53,19 @@ fn main() {
 
     // ── TYPE INFERENCE ──────────────────────────────────────
     // Rust bisa menebak tipe closure dari konteks
-    // Tapi sekali ditebak, tipenya FIXED — tidak bisa berubah
+    // Tapi sekali ditebak, tipenya FIXED — tidak bisa berubah!
     let contoh = |x| x; // tipe ditentukan saat pertama dipanggil
     let _s = contoh(String::from("halo")); // x adalah String
     // let n = contoh(5); // ❌ ERROR! x sudah ditetapkan String
 
     // ── CAPTURING ENVIRONMENT ───────────────────────────────
     // Closure bisa "menangkap" variabel dari scope luar!
-    let pesan = String::from("Halo dari luar");
+    //
+    // 💡 Analogi: Bayangkan closure seperti kapsul waktu —
+    //    saat dibuat, ia menyimpan "snapshot" variabel sekitarnya.
 
     // Capture by reference (immutable borrow) — default
+    let pesan = String::from("Halo dari luar");
     let cetak = || println!("{}", pesan);
     cetak();
     println!("pesan masih ada: {}", pesan); // ✅ masih valid
@@ -71,6 +94,11 @@ fn main() {
 
     // ── CLOSURE SEBAGAI PARAMETER FUNGSI ────────────────────
     // Ada 3 trait closure: Fn, FnMut, FnOnce
+    //
+    // 💡 Analogi: Tiga tingkat akses ke rumah:
+    //   Fn     = boleh masuk dan lihat (immutable borrow)
+    //   FnMut  = boleh masuk dan ubah interior (mutable borrow)
+    //   FnOnce = ambil rumahnya (take ownership)
 
     // Fn — closure yang hanya baca (immutable borrow)
     let angka = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -184,20 +212,48 @@ fn buat_penambah(n: i32) -> impl Fn(i32) -> i32 {
 }
 
 // ============================================================
-// 📚 TIGA TRAIT CLOSURE:
+// 🧠 RINGKUMAN CLOSURE TRAITS:
 //
-// 1. FnOnce — closure yang mengambil ownership dari captured values
-//    Hanya bisa dipanggil SEKALI. Semua closure implement ini.
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    TIGA TRAIT CLOSURE                       │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Fn               │ Immutable borrow dari captured vars      │
+// │                  │ Bisa dipanggil berkali-kali              │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ FnMut            │ Mutable borrow dari captured vars        │
+// │                  │ Bisa dipanggil berkali-kali              │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ FnOnce           │ Take ownership dari captured vars        │
+// │                  │ Hanya bisa dipanggil SEKALI              │
+// └──────────────────┴──────────────────────────────────────────┘
 //
-// 2. FnMut — closure yang bisa mengubah captured values (mutable borrow)
-//    Bisa dipanggil berulang kali.
+// 💡 Hierarki: Fn ⊂ FnMut ⊂ FnOnce
+//    - Setiap closure implement FnOnce
+//    - Kalau hanya baca, juga implement FnMut dan Fn
+//    - Kalau mutasi, implement FnMut dan FnOnce (tapi bukan Fn)
+//    - Kalau move, implement FnOnce saja (mungkin)
 //
-// 3. Fn — closure yang hanya membaca captured values (immutable borrow)
-//    Paling restrictive, tapi paling fleksibel untuk dipanggil.
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    CAPTURE MODES                            │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ (default)        │ Compiler pilih: &T, &mut T, atau T       │
+// │ move             │ Paksa capture by value (ownership)       │
+// └──────────────────┴──────────────────────────────────────────┘
 //
-// Hierarki: Fn ⊂ FnMut ⊂ FnOnce
-// Jika fungsi menerima FnOnce, bisa terima semua closure.
-// Jika fungsi menerima Fn, hanya bisa terima Fn closures.
+// ⚠️ COMMON MISTAKES:
+// - Closure borrow mutable sementara variabel dipakai → borrow error
+// - Return closure tanpa `move` → lifetime error
+// - Panggil FnOnce lebih dari sekali → compile error
+// - Lupa `mut` pada variabel closure yang FnMut
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Python           | JavaScript        |
+// |-------------------|------------------|-------------------|
+// | \|x\| x + 1       | lambda x: x+1    | (x) => x + 1      |
+// | move \|x\| ...    | (capture by ref) | (closure capture) |
+// | .iter().map()     | map()            | .map()            |
+// | .filter()         | filter()         | .filter()         |
+// | .fold()           | reduce()         | .reduce()         |
 // ============================================================
 
 // ============================================================
@@ -210,4 +266,5 @@ fn buat_penambah(n: i32) -> impl Fn(i32) -> i32 {
 //    dan terapkan secara berurutan
 // 4. Implementasi memoization closure untuk fibonacci
 // 5. Buat event handler sederhana yang menyimpan Vec closures
+// 6. Gunakan iterator chain untuk: filter > map > collect
 // ============================================================

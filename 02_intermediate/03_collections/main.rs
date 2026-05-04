@@ -6,6 +6,15 @@
 // - Vec<T>     → array dinamis (seperti ArrayList)
 // - HashMap    → key-value store (seperti dictionary/map)
 // - HashSet    → kumpulan nilai unik
+//
+// 🎯 Tujuan: Memahami cara menggunakan collections bawaan Rust
+//    dan method-method penting pada masing-masing.
+//
+// 💡 Analogi Utama:
+// - Vec  = Lemari laci yang bisa ditambah — setiap laci sama besar,
+//          bisa ditambah/dikurangi sesuai kebutuhan.
+// - HashMap = Buku telepon — cari nama (key), dapat nomor (value).
+// - HashSet = Keranjang bola unik — setiap bola hanya boleh ada satu.
 // ============================================================
 
 use std::collections::HashMap;
@@ -19,12 +28,14 @@ fn main() {
     // ── Membuat Vec ─────────────────────────────────────────
     let mut angka: Vec<i32> = Vec::new(); // Vec kosong dengan type annotation
     let buah = vec!["Apel", "Jeruk", "Mangga"]; // macro vec! dengan isi awal
-    let nol = vec![0; 5]; // [0, 0, 0, 0, 0]
+    let nol = vec![0; 5]; // [0, 0, 0, 0, 0] — repeat syntax
 
     println!("buah: {:?}", buah);
     println!("nol: {:?}", nol);
 
     // ── Push & Pop ──────────────────────────────────────────
+    // push: tambah di akhir, pop: ambil dari akhir
+    // Kedua operasi O(1) — sangat cepat!
     angka.push(10);
     angka.push(20);
     angka.push(30);
@@ -38,6 +49,7 @@ fn main() {
     println!("Elemen ke-0: {}", angka[0]);
 
     // Cara 2: .get() — return Option, AMAN!
+    // 💡 Selalu prefer .get() kalau index mungkin tidak valid!
     match angka.get(10) {
         Some(val) => println!("Elemen ke-10: {}", val),
         None => println!("Elemen ke-10 tidak ada!"),
@@ -46,7 +58,7 @@ fn main() {
     // ── Iterasi ─────────────────────────────────────────────
     let skor = vec![85, 92, 78, 95, 88];
 
-    // Immutable iteration
+    // Immutable iteration — hanya membaca
     for s in &skor {
         print!("{} ", s);
     }
@@ -71,10 +83,11 @@ fn main() {
     println!("Kosong? {}", data.is_empty());
     println!("Contains 5? {}", data.contains(&5));
 
-    data.sort(); // sort in-place
+    data.sort(); // sort in-place (quick sort / intro sort)
     println!("Sorted: {:?}", data);
 
-    data.dedup(); // hapus duplikat BERTURUT-TURUT (harus sorted dulu!)
+    data.dedup(); // hapus duplikat BERTURUT-TURUT
+    // ⚠️ dedup hanya menghapus yang bersebelahan! Sort dulu kalau perlu.
     println!("Dedup: {:?}", data);
 
     data.reverse();
@@ -98,6 +111,7 @@ fn main() {
     println!("Gabung: {:?}", gabung);
 
     // ── Vec dengan Enum (untuk menyimpan tipe berbeda) ──────
+    // Vec hanya bisa menyimpan SATU tipe — tapi enum bisa jadi solusi!
     #[derive(Debug)]
     enum Sel {
         Int(i32),
@@ -126,7 +140,7 @@ fn main() {
     println!("Skor: {:?}", skor_siswa);
 
     // ── Akses Nilai ─────────────────────────────────────────
-    // .get() return Option<&V>
+    // .get() return Option<&V> — hati-hati reference!
     let nama_cari = String::from("Ani");
     match skor_siswa.get(&nama_cari) {
         Some(skor) => println!("Skor {}: {}", nama_cari, skor),
@@ -143,7 +157,7 @@ fn main() {
     skor_siswa.entry(String::from("Budi")).or_insert(0); // tidak overwrite!
     println!("Setelah entry: {:?}", skor_siswa);
 
-    // entry() dengan modifikasi
+    // entry() dengan modifikasi — pattern yang sangat umum!
     let teks = "halo dunia halo rust halo semua";
     let mut frekuensi: HashMap<&str, i32> = HashMap::new();
     for kata in teks.split_whitespace() {
@@ -227,6 +241,50 @@ fn main() {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN COLLECTIONS:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    VEC<T> CHEAT SHEET                       │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Membuat          │ Vec::new(), vec![...], vec![v; n]        │
+// │ Tambah           │ push(), insert()                         │
+// │ Hapus            │ pop(), remove(), retain()                │
+// │ Akses            │ [i], .get(i), .first(), .last()          │
+// │ Cari             │ contains(), iter().find()                │
+// │ Sort             │ sort(), sort_by(), reverse()             │
+// │ Lain             │ len(), is_empty(), extend()              │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    HASHMAP<K,V> CHEAT SHEET                 │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Membuat          │ HashMap::new()                           │
+// │ Insert           │ insert(), entry().or_insert()            │
+// │ Akses            │ get(), get_mut()                         │
+// │ Cek              │ contains_key()                           │
+// │ Hapus            │ remove()                                 │
+// │ Iterasi          │ keys(), values(), iter()                 │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Vec index out of bounds → gunakan .get() untuk aman
+// - Lupa `mut` saat perlu mengubah collection
+// - HashMap: lupa reference (&V) dari .get()
+// - HashSet: mengharapkan urutan tetap → gunakan BTreeSet kalau perlu
+// - Membuat HashMap tanpa `use std::collections::HashMap`
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Python           | JavaScript        |
+// |-------------------|------------------|-------------------|
+// | Vec               | list             | Array             |
+// | HashMap           | dict             | Map/Object        |
+// | HashSet           | set              | Set               |
+// | vec![1,2,3]       | [1,2,3]          | [1,2,3]           |
+// | map.get(&key)     | map[key]         | map.get(key)      |
+// | set.insert(x)     | set.add(x)       | set.add(x)        |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat program yang menghitung frekuensi huruf dalam string
 // 2. Buat "phonebook" dengan HashMap — bisa add, search, delete
@@ -234,4 +292,6 @@ fn main() {
 //    tanpa duplikat (gunakan HashSet)
 // 4. Buat program inventory sederhana: item name → quantity
 // 5. Implementasikan "two sum" problem menggunakan HashMap
+// 6. Buat Vec<String> dan sort berdasarkan panjang string
+// 7. Gunakan entry() untuk menghitung frekuensi karakter
 // ============================================================

@@ -4,6 +4,20 @@
 // Trait objects memungkinkan polymorphism di RUNTIME.
 // Berbeda dari generics yang di-resolve saat COMPILE time.
 // Notasi: `dyn TraitName`
+//
+// 🎯 Tujuan: Memahami perbedaan static vs dynamic dispatch,
+//    object safety, dan kapan menggunakan trait objects.
+//
+// 💡 Analogi Utama:
+// Static dispatch (generics) seperti restoran dengan menu tetap —
+//    pesananmu sudah diketahui saat masuk (compile time).
+// Dynamic dispatch (trait objects) seperti restoran all-you-can-eat —
+//    kamu ambil makanan saat di sana (runtime), tidak tahu
+juga tidak tahu sebelumnya apa yang akan diambil.
+//
+// 🔑 Trait objects memungkinkan kita menyimpan tipe BERBEDA
+//    dalam satu koleksi — sesuatu yang tidak bisa dilakukan
+//    dengan generics!
 // ============================================================
 
 use std::fmt;
@@ -61,9 +75,13 @@ impl Drawable for Gambar {
 }
 
 // ── SCREEN: MENYIMPAN TRAIT OBJECTS ─────────────────────────
+// Vec<Box<dyn Drawable>> = vektor dari trait objects
+// Bisa menyimpan TIPE BERBEDA selama implement Drawable!
+//
+// 💡 Analogi: Screen seperti layar ponsel — bisa menampilkan
+//    tombol, input, gambar, dll. Semua berbeda tipe, tapi
+//    bisa ditampilkan di layar yang sama.
 struct Screen {
-    // Vec<Box<dyn Drawable>> = vektor dari trait objects
-    // Bisa menyimpan TIPE BERBEDA selama implement Drawable!
     komponen: Vec<Box<dyn Drawable>>,
 }
 
@@ -248,23 +266,39 @@ fn main() {
 }
 
 // ============================================================
-// 📝 STATIC vs DYNAMIC DISPATCH:
+// 🧠 RINGKUMAN STATIC vs DYNAMIC DISPATCH:
 //
-// Static (impl Trait / generics):
-//   + Lebih cepat (no vtable lookup)
-//   + Compiler bisa inline & optimize
-//   - Kode lebih besar (monomorphization)
-//   - Tidak bisa campur tipe dalam satu koleksi
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    STATIC vs DYNAMIC                        │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ Static (generics)│ Dynamic (dyn Trait)   │
+// ├──────────────────┼──────────────────┼───────────────────────┤
+// │ Dispatch         │ Compile time     │ Runtime               │
+// │ Performance      │ Lebih cepat      │ Sedikit lebih lambat  │
+// │ Inline           │ Bisa di-inline   │ Tidak bisa            │
+// │ Code size        │ Lebih besar      │ Lebih kecil           │
+// │ Heterogeneous    │ ❌ Tidak bisa    │ ✅ Bisa               │
+// │ Collection       │                  │                       │
+// │ Use case         │ Default          │ Plugin, UI, factory   │
+// └──────────────────┴──────────────────┴───────────────────────┘
 //
-// Dynamic (dyn Trait):
-//   + Bisa campur tipe dalam satu koleksi
-//   + Kode lebih kecil
-//   - Sedikit lebih lambat (vtable indirection)
-//   - Tidak bisa di-inline
+// 💡 Rule of thumb: Gunakan generics secara default.
+//    Gunakan trait objects saat PERLU heterogeneous collection
+//    atau saat return tipe berbeda berdasarkan runtime condition.
 //
-// Rule of thumb: Gunakan generics secara default.
-// Gunakan trait objects saat PERLU heterogeneous collection
-// atau saat return tipe berbeda berdasarkan runtime condition.
+// ⚠️ COMMON MISTAKES:
+// - Menggunakan dyn Trait tanpa Box/& → compile error (unsized!)
+// - Trait tidak object safe → compile error
+// - Lupa Box::new() saat membuat trait object
+// - Expect trait object bisa di-clone → tidak bisa (Self!)
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C++              | Java              |
+// |-------------------|------------------|-------------------|
+// | dyn Trait         | virtual class    │ interface         |
+// | vtable            │ vtable           │ vtable            │
+// | Box<dyn Trait>    │ unique_ptr<Base> │ new Impl()        │
+// | &dyn Trait        │ Base*            │ Base ref          │
 // ============================================================
 
 // ============================================================
@@ -278,4 +312,5 @@ fn main() {
 //    diganti saat runtime
 // 5. Buat serializer: trait Serialize dengan method to_json()
 //    dan to_xml() — implement untuk beberapa struct
+// 6. Buat file parser yang return Box<dyn Parser> berdasarkan ekstensi
 // ============================================================

@@ -5,6 +5,20 @@
 // Rust compiler (borrow checker) mengecek ini saat compile time.
 // Lifetime annotation ('a) TIDAK mengubah berapa lama data hidup —
 // hanya MENJELASKAN relasi antar reference.
+//
+// 🎯 Tujuan: Memahami konsep lifetime, lifetime annotation,
+//    elision rules, dan penggunaan lifetime dalam struct dan fungsi.
+//
+// 💡 Analogi Utama:
+// Lifetime seperti SERTIFIKAT MASA BERLAKU. Kalau kamu pinjam
+// buku dari perpustakaan, kamu hanya boleh pakai buku itu selama
+// masa pinjam berlaku. Lifetime annotation memberitahu compiler:
+// "reference ini valid selama 'a" — compiler lalu memastikan
+// data yang ditunjuk hidup SETIDAKNYA selama 'a.
+//
+// 🔑 Konsep Kunci: Lifetime BUKAN mengubah berapa lama data hidup.
+//    Lifetime hanya MENJELASKAN relasi antar reference agar
+//    compiler bisa memverifikasi keamanan.
 // ============================================================
 
 fn main() {
@@ -17,8 +31,10 @@ fn main() {
     //     r = &x;  // ❌ ERROR! x akan di-drop di akhir scope
     // }
     // println!("{}", r);  // r menunjuk ke memori yang sudah dibebaskan!
+    //
+    // 💡 Compiler menolak kode di atas — Rust melindungi kita!
 
-    // Yang benar:
+    // Yang benar: reference harus hidup SETIDAKNYA selama pemakainya
     let x = 5;
     let r = &x; // ✅ x hidup selama r masih dipakai
     println!("r = {}", r);
@@ -46,6 +62,9 @@ fn main() {
     // ── LIFETIME ELISION RULES ──────────────────────────────
     // Rust punya 3 aturan yang memungkinkan kita TIDAK menulis lifetime:
     //
+    // 💡 Analogi: Elision seperti "aturan baku" — kalau pola umum,
+    //    tidak perlu tulis lifetime secara eksplisit.
+    //
     // Rule 1: Setiap reference parameter dapat lifetime sendiri
     //   fn foo(x: &str, y: &str) → fn foo<'a, 'b>(x: &'a str, y: &'b str)
     //
@@ -61,6 +80,7 @@ fn main() {
     println!("Kata pertama: {}", pertama);
 
     // ── LIFETIME DALAM STRUCT ───────────────────────────────
+    // Struct yang menyimpan reference HARUS punya lifetime annotation
     let novel = String::from("Laskar Pelangi karya Andrea Hirata");
     let kalimat_pertama;
     {
@@ -90,6 +110,7 @@ fn main() {
     println!("{}", s);
 
     // ⚠️ Jangan asal pakai 'static! Biasanya ada lifetime yang lebih tepat.
+    // 'static untuk string literal dan leaked memory saja.
 
     // ── LIFETIME BOUND PADA GENERIC ─────────────────────────
     let ann_str = String::from("Pengumuman penting!");
@@ -114,7 +135,10 @@ fn main() {
 
 // ── FUNGSI DENGAN LIFETIME ANNOTATION ───────────────────────
 // 'a dibaca "lifetime a" — artinya: returned reference akan hidup
-// setidaknya selama KEDUA parameter hidup
+// setidaknya selama KEDUA parameter hidup.
+//
+// 💡 Analogi: Kalau dua orang meminjamkan barang, hasilnya
+//    hanya valid selama barang KEDUA orang masih ada.
 fn terpanjang<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() {
         x
@@ -198,15 +222,36 @@ fn parse_csv<'a>(line: &'a str) -> Vec<&'a str> {
 }
 
 // ============================================================
-// 📝 RANGKUMAN LIFETIME:
+// 🧠 RINGKUMAN LIFETIME:
 //
-// 1. Lifetime menjamin reference selalu valid
-// 2. 'a, 'b, dll. adalah NAMA lifetime — konvensi huruf kecil
-// 3. Compiler sering bisa menebak (elision) — tulis hanya jika diminta
-// 4. 'static = hidup selamanya (string literal, leaked memory)
-// 5. Struct yang menyimpan reference HARUS punya lifetime
-// 6. Lifetime BUKAN mengubah berapa lama data hidup —
-//    hanya menjelaskan RELASI antar reference
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    KONSEP LIFETIME                          │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ 'a, 'b, dll.     │ Nama lifetime — konvensi huruf kecil     │
+// │ &'a str          │ Reference ke str yang valid selama 'a    │
+// │ Struct<'a>       │ Struct yang menyimpan reference 'a       │
+// │ 'static          │ Hidup selamanya (string literal)         │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    ELISION RULES                            │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Rule 1           │ Tiap param &T dapat lifetime sendiri     │
+// │ Rule 2           │ 1 input → output dapat lifetime itu      │
+// │ Rule 3           │ &self → output dapat lifetime self       │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Return reference ke data lokal → lifetime error
+// - Lupa lifetime annotation pada struct dengan reference
+// - Asumsi 'static = solusi segala masalah → tidak!
+// - Multiple references dengan lifetime sama padahal berbeda
+//
+// 💡 TIPS:
+// - Kalau compiler minta lifetime, tambahkan eksplisit
+// - Mulai dari yang paling sederhana, tambah kalau perlu
+// - Prefer owned data (String, Vec) daripada reference
+//   kalau lifetime menjadi terlalu kompleks
 // ============================================================
 
 // ============================================================

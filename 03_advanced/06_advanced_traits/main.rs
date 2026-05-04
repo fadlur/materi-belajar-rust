@@ -7,6 +7,15 @@
 // - Supertraits
 // - Newtype Pattern
 // - Blanket Implementations
+//
+// 🎯 Tujuan: Memahami fitur-fitur advanced trait dan
+//    kapan menggunakannya dalam desain API.
+//
+// 💡 Analogi Utama:
+// Advanced traits seperti fitur premium pada membership —
+//    associated types = "profil kustom", operator overloading =
+//    "shortcut khusus", supertraits = "prasyarat", blanket impl =
+//    "benefit otomatis untuk semua anggota".
 // ============================================================
 
 use std::fmt;
@@ -16,9 +25,16 @@ use std::ops::{Add, Mul, Neg};
 // ASSOCIATED TYPES — Tipe yang terkait dengan trait
 // ══════════════════════════════════════════════════════════════
 
-// Associated type lebih bersih dari generic pada trait
-// Generic: trait Iterator<T> { fn next(&mut self) -> Option<T>; }
-// Associated: trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
+// Associated type lebih bersih dari generic pada trait.
+//
+// 💡 Perbedaan:
+//   Generic:    trait Iterator<T> { fn next(&mut self) -> Option<T>; }
+//   Associated: trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
+//
+// Kenapa associated type lebih baik? Karena satu tipe hanya bisa
+// punya SATU implementasi Iterator — tidak mungkin punya dua
+// Item type berbeda. Generic memungkinkan <T> berbeda, yang
+// kadang tidak masuk akal.
 
 trait Koleksi {
     type Item;                              // associated type
@@ -179,6 +195,10 @@ impl fmt::Display for Matrix2x2 {
 
 // Rust tidak mengizinkan implement trait asing pada tipe asing
 // (orphan rule). Solusi: bungkus dengan newtype!
+//
+// 💡 Analogi: Newtype seperti bungkus kado — barangnya sama,
+//    tapi sekarang punya label (tipe) baru yang bisa kita
+//    kasih kemampuan (trait) sendiri.
 
 struct Rupiah(f64);
 
@@ -222,11 +242,11 @@ impl fmt::Display for DaftarBelanja {
 // BLANKET IMPLEMENTATION — Implement trait untuk semua T: Trait
 // ══════════════════════════════════════════════════════════════
 
+// Blanket impl: semua tipe yang implement Display otomatis dapat Ringkasan!
 trait Ringkasan {
     fn ringkasan(&self) -> String;
 }
 
-// Blanket impl: semua tipe yang implement Display otomatis dapat Ringkasan!
 impl<T: fmt::Display> Ringkasan for T {
     fn ringkasan(&self) -> String {
         let s = format!("{}", self);
@@ -348,6 +368,46 @@ fn main() {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN ADVANCED TRAITS:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    FITUR LANJUTAN TRAIT                     │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Associated Types │ type Item; dalam trait                  │
+// │                  │ Lebih bersih dari generic                │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Operator Overload│ Add, Mul, Neg, Sub, Div, dll            │
+// │                  │ type Output = ...                        │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Newtype Pattern  │ struct Wrapper(T)                       │
+// │                  │ Bypass orphan rule                       │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Blanket Impl     │ impl<T: TraitA> TraitB for T {}         │
+// │                  │ Auto-implement untuk semua T             │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Supertrait       │ trait Sub: Super { ... }                │
+// │                  │ Trait memerlukan trait lain              │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ Fully Qualified  │ <T as Trait>::method(&self)             │
+// │ Syntax           │ Disambiguasi nama method                 │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Orphan rule violation → newtype needed
+// - Conflicting blanket impl → design issue
+// - Operator overloading yang tidak intuitif
+// - Lupa Clone/Copy saat operator consuming
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C++              | Python            |
+// |-------------------|------------------|-------------------|
+// | operator+         | operator+        │ __add__           │
+// | Add trait         │ operator overloading│ dunder methods │
+// | newtype           │ wrapper class    │ subclass/wrapper  │
+// | blanket impl      │ (no equivalent)  │ mixin/ABC         │
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat struct `Pecahan` (numerator, denominator) dengan operator
 //    +, -, *, / dan Display
@@ -355,4 +415,5 @@ fn main() {
 // 3. Buat newtype `Email(String)` dengan validasi
 // 4. Buat trait `Serializable` dengan associated type `Output`
 // 5. Implementasikan Index trait untuk custom collection
+// 6. Buat blanket impl: semua tipe yang Debug otomatis Printable
 // ============================================================

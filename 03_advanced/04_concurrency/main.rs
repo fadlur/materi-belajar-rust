@@ -4,6 +4,19 @@
 // Rust menjamin "fearless concurrency" — banyak bug concurrency
 // ditangkap saat COMPILE TIME, bukan runtime!
 // Ini berkat ownership system dan type system Rust.
+//
+// 🎯 Tujuan: Memahami thread, message passing, shared state,
+//    dan patterns concurrency di Rust.
+//
+// 💡 Analogi Utama:
+// Thread seperti PEKERJA di pabrik — setiap pekerja (thread)
+//    bisa mengerjakan tugas secara paralel. Tapi kalau mereka
+//    perlu berbagi alat (data), harus ada aturan agar tidak
+//    berebut atau merusak alat.
+//
+// 🔑 Rust mencegah data race saat COMPILE TIME melalui
+//    ownership dan borrowing — tidak perlu khawatir race
+//    condition yang sulit di-debug!
 // ============================================================
 
 use std::sync::{Arc, Mutex, mpsc};
@@ -16,7 +29,7 @@ fn main() {
     // ════════════════════════════════════════════════════════
 
     // ── Membuat Thread ──────────────────────────────────────
-    // thread::spawn menerima closure
+    // thread::spawn menerima closure dan menjalankannya di thread baru
     let handle = thread::spawn(|| {
         for i in 1..=5 {
             println!("Thread anak: {}", i);
@@ -36,7 +49,7 @@ fn main() {
 
     // ── MOVE Closure untuk Thread ───────────────────────────
     // Thread bisa hidup lebih lama dari scope pembuatnya,
-    // jadi data harus di-MOVE ke dalam thread
+    // jadi data harus di-MOVE ke dalam thread.
     let pesan = String::from("Halo dari main!");
 
     let handle2 = thread::spawn(move || {
@@ -73,6 +86,10 @@ fn main() {
 
     // mpsc = Multiple Producer, Single Consumer
     // Seperti walkie-talkie: banyak pengirim, satu penerima
+    //
+    // 💡 Analogi: Channel seperti pipa — thread pengirim (tx)
+    //    memasukkan data di satu ujung, thread penerima (rx)
+    //    mengambil data di ujung lain.
 
     // ── Channel Dasar ───────────────────────────────────────
     let (tx, rx) = mpsc::channel();
@@ -134,6 +151,10 @@ fn main() {
     // Mutex memastikan hanya SATU thread yang bisa akses data pada satu waktu
     // .lock() → mendapatkan akses (blocking jika thread lain sedang pakai)
     // Lock otomatis dilepas saat MutexGuard keluar scope
+    //
+    // 💡 Analogi: Mutex seperti kunci toilet — hanya satu orang
+    //    yang bisa masuk pada satu waktu. Orang lain harus menunggu
+    //    di luar sampai kunci dilepas.
 
     // ── Mutex Dasar (single thread) ─────────────────────────
     let m = Mutex::new(5);
@@ -149,6 +170,9 @@ fn main() {
     // ── Arc + Mutex (multi-thread) ──────────────────────────
     // Arc = Atomic Reference Counting (thread-safe version of Rc)
     // Rc TIDAK thread-safe! Harus pakai Arc untuk multi-thread
+    //
+    // 💡 Pattern: Arc<Mutex<T>> adalah combo paling umum untuk
+    //    shared mutable state di Rust.
 
     let counter = Arc::new(Mutex::new(0));
     let mut handles2 = vec![];
@@ -236,20 +260,47 @@ fn main() {
 }
 
 // ============================================================
-// 📝 KAPAN PAKAI APA?
+// 🧠 RINGKUMAN CONCURRENCY:
 //
-// Channel (Message Passing):
-// - Saat data mengalir dari satu thread ke thread lain
-// - Saat ingin menghindari shared state
-// - Producer-consumer pattern
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    MESSAGE PASSING vs SHARED STATE          │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ Channel          │ Mutex                 │
+// ├──────────────────┼──────────────────┼───────────────────────┤
+// │ Konsep           │ Kirim data       │ Kunci akses           │
+// │ Copy data?       │ Ya (move)        │ Tidak (shared)        │
+// │ Race condition?  │ Tidak mungkin    │ Dicek runtime         │
+// │ Deadlock?        │ Jarang           │ Mungkin               │
+// │ Use case         │ Pipeline, worker │ Counter, cache        │
+// └──────────────────┴──────────────────┴───────────────────────┘
 //
-// Mutex (Shared State):
-// - Saat multiple thread perlu akses ke data yang sama
-// - Counter, cache, shared config
-// - Selalu gunakan Arc<Mutex<T>> untuk multi-thread
+// 💡 Rule of thumb: "Do not communicate by sharing memory;
+//    share memory by communicating." — tapi Rust support keduanya!
 //
-// Rule of thumb: "Do not communicate by sharing memory;
-// share memory by communicating." — tapi Rust support keduanya!
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    THREAD-SAFE TYPES                        │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Arc<T>           │ Thread-safe Rc (reference counting)      │
+// │ Mutex<T>         │ Mutual exclusion (single lock)           │
+// │ RwLock<T>        │ Read-write lock (banyak reader)          │
+// │ mpsc::channel    │ Message passing channel                  │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Rc di multi-thread → compile error, gunakan Arc
+// - RefCell di multi-thread → compile error, gunakan Mutex
+// - Deadlock: lock A → lock B vs lock B → lock A
+// - Lupa .join() → thread mungkin belum selesai
+// - Move data yang masih dipakai setelah spawn
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Go               | Java              |
+// |-------------------|------------------|-------------------|
+// | thread::spawn     | go func()        | new Thread()      |
+// | mpsc::channel     | channel          | BlockingQueue     |
+// | Mutex<T>          | sync.Mutex       | synchronized      |
+// | Arc<T>            | (GC-managed)     | (GC-managed)      |
+// | .join()           | (no explicit)    | .join()           |
 // ============================================================
 
 // ============================================================
@@ -260,4 +311,6 @@ fn main() {
 // 3. Buat producer-consumer pattern: 3 producer, 1 consumer
 // 4. Buat shared HashMap yang bisa diakses dari multiple threads
 // 5. Implementasikan parallel map: vec.par_map(|x| x * 2)
+// 6. Buat program yang menghitung jumlah kata di beberapa file
+//    secara paralel menggunakan thread
 // ============================================================

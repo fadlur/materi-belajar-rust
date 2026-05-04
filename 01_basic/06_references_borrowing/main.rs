@@ -4,28 +4,53 @@
 // Masalah: memindahkan ownership bolak-balik itu merepotkan.
 // Solusi: REFERENCES — "meminjam" data tanpa mengambil ownership.
 //
-// ATURAN BORROWING:
-// 1. Boleh punya BANYAK immutable reference (&T) ATAU
-// 2. SATU mutable reference (&mut T) — TIDAK BOLEH keduanya bersamaan
-// 3. Reference harus selalu valid (no dangling references)
+// 🎯 Tujuan: Memahami konsep borrowing, immutable vs mutable
+//    references, aturan borrowing, dan dangling references.
+//
+// 💡 Analogi Utama:
+// Ownership seperti memiliki rumah. References seperti meminjamkan
+// kunci rumah ke teman:
+// - Immutable reference (&T) = teman boleh masuk dan melihat, tapi
+//   tidak boleh mengubah apa pun. Banyak teman bisa pinjam kunci.
+// - Mutable reference (&mut T) = teman boleh masuk dan mengubah
+//   interior. Tapi HANYA SATU teman yang boleh punya kunci ini
+//   pada satu waktu — dan tidak boleh ada yang lain meminjam kunci
+//   biasa saat kunci mutable sedang dipinjam.
+//
+// 🏠 Ini memungkinkan kita menggunakan data tanpa harus
+// mengambil alih ownership — solusi elegan untuk masalah
+// kepemilikan data di Rust!
 // ============================================================
 
 fn main() {
     // ── IMMUTABLE REFERENCE (&) ─────────────────────────────
     // `&` membuat reference — meminjam tanpa mengambil ownership
+    //
+    // 💡 Analogi: & seperti "alamat" rumah — kamu memberitahu
+    //    teman alamat rumahmu, tapi rumah tetap milikmu.
+    //    Teman bisa datang dan melihat, tapi tidak bisa jual rumahnya.
     let s1 = String::from("halo");
     let panjang = hitung_panjang(&s1); // &s1 = reference ke s1
-    // s1 masih valid! Kita hanya "meminjamkan"-nya
+    // `s1` masih valid! Kita hanya "meminjamkan"-nya
     println!("Panjang '{}' adalah {}", s1, panjang);
 
     // Bisa punya BANYAK immutable reference sekaligus
+    // Ini aman karena tidak ada yang bisa mengubah data!
     let r1 = &s1;
     let r2 = &s1;
     let r3 = &s1;
     println!("r1={}, r2={}, r3={}", r1, r2, r3); // ✅ Semua OK!
+    //
+    // 💡 Kenapa boleh banyak? Karena semua hanya MEMBACA.
+    //    Tidak ada yang bisa merusak data — jadi aman.
 
     // ── MUTABLE REFERENCE (&mut) ────────────────────────────
     // Untuk mengubah data yang dipinjam, butuh mutable reference
+    //
+    // 💡 Analogi: &mut seperti memberi kunci master kepada satu
+    //    kontraktor saja. Kontraktor bisa renovasi rumah, tapi
+    //    selama renovasi berlangsung, tidak boleh ada yang lain
+    //    masuk rumah — bisa berbahaya!
     let mut s2 = String::from("halo");
     ubah_string(&mut s2); // &mut s2 = mutable reference
     println!("Setelah diubah: {}", s2);
@@ -50,18 +75,27 @@ fn main() {
     println!("r8 = {}", r8);
 
     // Ini disebut "Non-Lexical Lifetimes" (NLL) — Rust cukup pintar
-    // untuk tahu kapan reference terakhir dipakai
+    // untuk tahu kapan reference terakhir dipakai, bukan hanya
+    // berdasarkan scope kurung kurawal.
+    //
+    // 💡 Sebelum NLL (Rust < 1.31), kode di atas akan error karena
+    //    compiler hanya melihat scope, bukan kapan terakhir digunakan.
+    //    Sekarang Rust lebih pintar!
 
     // ── REFERENCE DALAM FUNGSI ──────────────────────────────
     let mut kata = String::from("Rust");
-    tambah_seru(&mut kata);
+    tambah_seru(&mut kata); // pinjam mutable
     println!("{}", kata); // "Rust!!!"
 
-    let panjang2 = panjang_string(&kata);
+    let panjang2 = panjang_string(&kata); // pinjam immutable
     println!("Panjang: {}", panjang2);
 
     // ── REFERENCING & DEREFERENCING ─────────────────────────
     // `&` untuk membuat reference, `*` untuk dereference
+    //
+    // 💡 Analogi:
+    //   & = "berikan alamat rumah" (buat reference)
+    //   * = "pergi ke alamat itu"  (akses nilai yang ditunjuk)
     let x = 5;
     let y = &x; // y adalah reference ke x
 
@@ -87,6 +121,13 @@ fn main() {
 
     // ── DANGLING REFERENCE (DICEGAH RUST) ───────────────────
     // Rust TIDAK MENGIZINKAN dangling reference!
+    // Dangling reference = reference yang menunjuk ke memori
+    // yang sudah dibebaskan (dropped).
+    //
+    // 💡 Analogi: Dangling reference seperti alamat rumah lama
+    //    yang sudah dihancurkan. Kalau seseorang pergi ke alamat
+    //    itu, yang ditemukan hanya tanah kosong!
+    //
     // fn dangling() -> &String {
     //     let s = String::from("halo");
     //     &s  // ❌ ERROR! `s` akan di-drop, reference jadi invalid
@@ -98,6 +139,9 @@ fn main() {
 
 // ── FUNGSI DENGAN IMMUTABLE REFERENCE ───────────────────────
 // Parameter `&String` berarti kita MEMINJAM String, bukan mengambil ownership
+//
+// 💡 Best Practice: Gunakan &str (string slice) daripada &String!
+//    &str lebih fleksibel — bisa menerima &String MAUPUN &str literal.
 fn hitung_panjang(s: &String) -> usize {
     s.len()
     // `s` keluar scope, tapi karena tidak punya ownership,
@@ -122,6 +166,7 @@ fn tambah_seru(s: &mut String) {
 // ── CONTOH FUNGSI YANG IDIOMATIK ────────────────────────────
 fn hitung_rata_rata(skor: &[i32]) -> f64 {
     // `&[i32]` adalah slice — lebih idiomatik dari &Vec<i32>
+    // Slice bisa menerima reference ke array, Vec, atau bagian dari Vec.
     let total: i32 = skor.iter().sum();
     total as f64 / skor.len() as f64
 }
@@ -140,6 +185,50 @@ fn tidak_dangling() -> String {
 }
 
 // ============================================================
+// 🧠 ATURAN BORROWING (HARUS DIINGAT!):
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │  ATURAN 1: Boleh punya BANYAK immutable reference (&T)      │
+// │            ATAU                                             │
+// │  ATURAN 2: SATU mutable reference (&mut T) — tidak keduanya │
+// │            bersamaan                                        │
+// │  ATURAN 3: Reference harus selalu valid (no dangling)       │
+// └─────────────────────────────────────────────────────────────┘
+//
+// 💡 Mengapa aturan ini? Untuk mencegah data race:
+//   - Dua thread/reader menulis ke data yang sama → corrupted data
+//   - Satu thread membaca sementara lainnya menulis → inconsistent read
+//   Rust mencegah ini SAAT COMPILE, bukan saat runtime!
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    REFERENCE CHEAT SHEET                    │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ &T               │ &mut T                │
+// ├──────────────────┼──────────────────┼───────────────────────┤
+// │ Bisa baca?       │ ✅ Ya            │ ✅ Ya                 │
+// │ Bisa tulis?      │ ❌ Tidak         │ ✅ Ya                 │
+// │ Jumlah sekaligus │ Banyak           │ Hanya 1               │
+// │ Bisa campur?     │ Boleh campur &T  │ ❌ &T dan &mut T      │
+// │                  │                  │    tidak boleh bareng │
+// └──────────────────┴──────────────────┴───────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Membuat dua &mut ke data yang sama → compile error
+// - Mix &T dan &mut T secara bersamaan → compile error
+// - Return reference ke data lokal → compile error (dangling)
+// - Lupa `mut` pada variabel saat butuh &mut → compile error
+// - Lupa dereference `*` saat perlu nilai, bukan reference
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C/C++            | Java/Python       |
+// |-------------------|------------------|-------------------|
+// | &T                | const T*         | (reference)       |
+// | &mut T            | T*               | (mutable ref)     |
+// | Borrow checker    | Manual           | GC-managed        |
+// | Dangling ref      | Compile error    | Runtime error/null|
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat fungsi yang menerima &Vec<String> dan mencetak semua elemen
 // 2. Buat fungsi yang menerima &mut Vec<i32> dan menghapus angka genap
@@ -147,4 +236,5 @@ fn tidak_dangling() -> String {
 // 4. Buat fungsi yang menerima &str dan return jumlah vokal
 // 5. Mengapa `fn buat(s: &str) -> &str { &s[0..3] }` valid?
 //    Kapan reference yang di-return valid/invalid?
+// 6. Buat fungsi yang swap dua elemen dalam slice menggunakan &mut
 // ============================================================

@@ -5,7 +5,19 @@
 // - Recoverable errors → Result<T, E>
 // - Unrecoverable errors → panic!
 //
-// Filosofi: error harus ditangani secara EKSPLISIT.
+// 🎯 Tujuan: Memahami filosofi error handling Rust dan
+//    menguasai Result<T,E>, Option<T>, operator ?, dan
+//    custom error types.
+//
+// 💡 Filosofi Rust: Error harus ditangani secara EKSPLISIT.
+//    Kalau fungsi bisa gagal, tipe return-nya HARUS menunjukkan
+//    kemungkinan gagal — tidak bisa "diam-diam" gagal seperti
+//    null pointer exception di bahasa lain.
+//
+// 🔑 Analogi: Result<T,E> seperti amplop berisi hasil —
+//    amploknya ada stiker "Sukses" (Ok) atau "Gagal" (Err).
+//    Penerima HARUS buka amplop dan cek stiker-nya —
+//    tidak bisa asal ambil isi!
 // ============================================================
 
 use std::fs;
@@ -17,12 +29,14 @@ fn main() {
     // PANIC! — Error yang Tidak Bisa Dipulihkan
     // ════════════════════════════════════════════════════════
 
-    // panic! langsung menghentikan program
+    // panic! langsung menghentikan program dengan pesan error
     // panic!("Ini crash!"); // uncomment untuk lihat
 
     // Beberapa operasi bisa menyebabkan panic secara implisit:
     // let v = vec![1, 2, 3];
     // v[99]; // ❌ panic: index out of bounds
+    //
+    // 💡 Tips: Gunakan .get() untuk menghindari panic saat indexing!
 
     // ════════════════════════════════════════════════════════
     // RESULT<T, E> — Error yang Bisa Dipulihkan
@@ -46,10 +60,14 @@ fn main() {
 
     // ── unwrap() dan expect() ───────────────────────────────
     // unwrap(): ambil nilai Ok, PANIC jika Err
+    //
+    // ⚠️ Gunakan hanya saat kamu YAKIN tidak akan Err!
+    //    Kalau Err, program CRASH — jangan dipakai di production.
     let pasti_angka: i32 = "123".parse().unwrap();
     println!("unwrap: {}", pasti_angka);
 
     // expect(): seperti unwrap tapi dengan pesan error custom
+    // Berguna untuk debugging — pesan custom membantu identifikasi sumber error.
     let pasti_angka2: i32 = "456".parse().expect("Harusnya bisa di-parse!");
     println!("expect: {}", pasti_angka2);
 
@@ -57,8 +75,9 @@ fn main() {
     // Gunakan proper error handling dengan match atau `?`
 
     // ── unwrap_or, unwrap_or_else, unwrap_or_default ────────
+    // Cara aman mendapatkan nilai dengan default kalau Err
     let val1: Result<i32, &str> = Err("error");
-    println!("unwrap_or: {}", val1.unwrap_or(0));
+    println!("unwrap_or: {}", val1.unwrap_or(0)); // default 0 jika Err
 
     let val2: Result<i32, &str> = Err("error");
     println!("unwrap_or_else: {}", val2.unwrap_or_else(|e| {
@@ -70,13 +89,14 @@ fn main() {
     println!("unwrap_or_default: {}", val3.unwrap_or_default()); // 0 untuk i32
 
     // ── map, and_then, or_else ──────────────────────────────
+    // Method untuk chaining/transformasi Result
     let parsed: Result<i32, _> = "10".parse::<i32>();
 
-    // map: transformasi nilai Ok
+    // map: transformasi nilai Ok (Err tetap Err)
     let doubled = parsed.map(|n| n * 2);
     println!("Doubled: {:?}", doubled); // Ok(20)
 
-    // and_then: chain Result (flatmap)
+    // and_then: chain Result (flatmap) — return Result baru
     let chained = "5".parse::<i32>().and_then(|n| {
         if n > 0 {
             Ok(n * 10)
@@ -97,7 +117,12 @@ fn main() {
     // ══════════════════════════════════════════════════════════
 
     // `?` otomatis return Err jika hasilnya Err, lanjut jika Ok
-    // Ini cara paling idiomatik untuk handle error di Rust!
+    // Ini cara PALING IDIOMATIK untuk handle error di Rust!
+    //
+    // 💡 Analogi: `?` seperti "kalau ada masalah, berhenti dan
+    //    laporkan ke atas. Kalau tidak ada masalah, lanjutkan."
+    //    Sangat berguna saat ada banyak operasi yang bisa gagal
+    //    secara berurutan.
 
     match baca_dan_parse("42") {
         Ok(n) => println!("baca_dan_parse: {}", n),
@@ -128,6 +153,8 @@ fn main() {
     // ══════════════════════════════════════════════════════════
     // CUSTOM ERROR TYPE
     // ══════════════════════════════════════════════════════════
+    // Untuk aplikasi/library yang kompleks, buat custom error type
+    // agar pemanggil bisa match error spesifik.
     match proses_pesanan("ORD-001", 5) {
         Ok(msg) => println!("Sukses: {}", msg),
         Err(e) => println!("Error pesanan: {}", e),
@@ -155,9 +182,17 @@ fn main() {
 
 // ── FUNGSI DENGAN `?` OPERATOR ──────────────────────────────
 // `?` hanya bisa dipakai di fungsi yang return Result atau Option
+//
+// 💡 Cara kerja `?`:
+//    let x = operasi()?;
+//    ↓ diterjemahkan menjadi:
+//    let x = match operasi() {
+//        Ok(val) => val,
+//        Err(e) => return Err(e.into()),
+//    };
 fn baca_dan_parse(input: &str) -> Result<i32, String> {
     // parse() return Result<i32, ParseIntError>
-    // .map_err() konversi tipe error
+    // .map_err() konversi tipe error ke String
     let angka = input.parse::<i32>().map_err(|e| format!("Parse error: {}", e))?;
     // Jika parse gagal, langsung return Err(...)
     // Jika berhasil, lanjut ke baris berikutnya
@@ -183,6 +218,7 @@ fn validasi_umur(input: &str) -> Result<u32, String> {
 }
 
 // ── CUSTOM ERROR TYPE ───────────────────────────────────────
+// Custom enum untuk error spesifik aplikasi
 #[derive(Debug)]
 enum PesananError {
     IdKosong,
@@ -206,6 +242,8 @@ impl std::fmt::Display for PesananError {
 }
 
 // Implement From untuk konversi otomatis dengan `?`
+// Kalau fungsi return Result<_, PesananError>, kita bisa pakai ?
+// pada operasi IO dan error-nya otomatis dikonversi!
 impl From<io::Error> for PesananError {
     fn from(e: io::Error) -> Self {
         PesananError::IoError(e)
@@ -233,6 +271,44 @@ fn proses_pesanan(id: &str, jumlah: u32) -> Result<String, PesananError> {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN ERROR HANDLING:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    ERROR HANDLING HIERARCHY                 │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ panic!           │ Fatal, tidak bisa dipulihkan             │
+// │                  │ Program dihentikan                       │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ unwrap/expect    │ Ambil nilai, panic kalau Err             │
+// │                  │ Hanya untuk prototyping/testing          │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ unwrap_or/else   │ Ambil nilai dengan default               │
+// │                  │ Aman untuk production                    │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ match            │ Handle Ok dan Err eksplisit              │
+// │                  │ Paling verbose, paling kontrol           │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ ? operator       │ Propagasi error secara idiomatik         │
+// │                  │ Terbaik untuk chaining operasi           │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - unwrap() di production → program bisa crash!
+// - Lupa handle Err di match → compile warning (bagus!)
+// - ? di fungsi yang tidak return Result → compile error
+// - Custom error tanpa implement Display → tidak bisa print
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Python           | JavaScript        |
+// |-------------------|------------------|-------------------|
+// | Result<T,E>       | try/except       | try/catch         |
+// | ? operator        | raise (implicit) | throw (implicit)  |
+// | unwrap()          | (no equivalent)  | (no equivalent)   |
+// | panic!            | unhandled except │ uncaught error    |
+// | map_err           | except Specific  | catch(e) { if }   |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat fungsi `bagi(a: f64, b: f64) -> Result<f64, String>`
 //    yang return error jika pembagi = 0
@@ -243,4 +319,5 @@ fn proses_pesanan(id: &str, jumlah: u32) -> Result<String, PesananError> {
 // 4. Buat custom error type untuk aplikasi kalkulator
 // 5. Implementasikan chain of ? untuk operasi multi-step:
 //    baca file → parse angka → hitung → return hasil
+// 6. Gunakan unwrap_or_else untuk memberi default custom
 // ============================================================

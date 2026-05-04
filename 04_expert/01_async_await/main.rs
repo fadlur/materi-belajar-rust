@@ -8,13 +8,19 @@
 // ⚠️ File ini membutuhkan dependency `tokio`. Tambahkan ke Cargo.toml:
 //     [dependencies]
 //     tokio = { version = "1", features = ["full"] }
+//
+// 🎯 Tujuan: Memahami konsep Future, async/await syntax,
+//    concurrent execution, dan patterns async di Rust.
+//
+// 💡 Analogi Utama:
+// Async seperti PESANAN DI RESTORAN. Kalau kamu pesan makanan,
+//    tidak perlu menunggu di kasir sampai makanan selesai.
+//    Kamu dapat nomor antrian (Future), duduk, dan pelayan
+//    akan memanggilmu (.await) saat makanan siap.
+//
+// 🔑 Kalau sync = kamu menunggu, tidak bisa lakukan apa-apa.
+//    Kalau async = kamu bisa lakukan hal lain sambil menunggu.
 // ============================================================
-
-// Untuk menjalankan file ini, update Cargo.toml dengan dependency tokio
-// lalu copy kode ini ke src/main.rs dan `cargo run`
-
-// Jika belum install tokio, kita bisa belajar konsep dasarnya dulu
-// menggunakan futures tanpa runtime
 
 use std::time::Duration;
 
@@ -24,6 +30,10 @@ use std::time::Duration;
 
 // `async fn` mengembalikan `Future` — sebuah nilai yang BELUM dihitung
 // Future bersifat LAZY — tidak dieksekusi sampai di-`.await` atau di-poll
+//
+// 💡 Analogi: Future seperti reservasi restoran — kamu sudah booking
+//    (memanggil async fn), tapi belum makan. Makan dimulai saat
+//    kamu datang (.await), bukan saat booking.
 
 // Ini adalah async function:
 async fn sapa(nama: &str) -> String {
@@ -263,18 +273,48 @@ async fn main() {
 }
 
 // ============================================================
-// 📝 RINGKASAN ASYNC:
+// 🧠 RINGKUMAN ASYNC:
 //
-// 1. `async fn` → mengembalikan Future (lazy, tidak langsung jalan)
-// 2. `.await` → menunggu Future selesai (non-blocking)
-// 3. `tokio::join!` → jalankan futures bersamaan
-// 4. `tokio::spawn` → jalankan task di background
-// 5. `tokio::select!` → tunggu salah satu future
-// 6. `tokio::time::timeout` → batas waktu
-// 7. Channel → komunikasi antar tasks
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    KONSEP ASYNC                             │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ async fn         │ Mengembalikan Future (lazy)              │
+// │ .await           │ Menunggu Future selesai (non-blocking)   │
+// │ tokio::join!     │ Jalankan futures bersamaan               │
+// │ tokio::spawn     │ Jalankan task di background              │
+// │ tokio::select!   │ Tunggu salah satu future                 │
+// │ tokio::time::timeout │ Batas waktu operasi                  │
+// │ Channel          │ Komunikasi antar tasks                   │
+// └──────────────────┴──────────────────────────────────────────┘
 //
-// ⚠️ Jangan panggil blocking code (std::thread::sleep, heavy CPU)
-//    di dalam async! Gunakan tokio::task::spawn_blocking() untuk itu.
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    ASYNC vs SYNC                            │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ Sync             │ Async                 │
+// ├──────────────────┼──────────────────┼───────────────────────┤
+// │ Blocking         │ Ya               │ Tidak                 │
+// │ Thread usage     │ 1 per operasi    │ Banyak per thread     │
+// │ Cocok untuk      │ CPU-bound        │ I/O-bound             │
+// │ Kompleksitas     │ Sederhana        │ Lebih kompleks        │
+// │ Memory overhead  │ Stack besar      │ Stack kecil (task)    │
+// └──────────────────┴──────────────────┴───────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Menjalankan async fn tanpa .await → Future tidak jalan!
+// - Blocking call di async (std::thread::sleep) → blok semua task
+// - Lupa tokio::main atau runtime lain
+// - Mix sync dan async tanpa spawn_blocking
+// - Deadlock di async (rare tapi mungkin)
+//
+// 🔗 PERBANDINGAN:
+// | Rust (async/await) | Go (goroutine)   | JavaScript        |
+// |--------------------|------------------|-------------------|
+// | async fn           | func (implicit)  | async function    │
+// | .await             | (implicit)       | await             │
+// | tokio::spawn       | go func()        | (event loop)      │
+// | Future             | (no explicit)    | Promise           │
+// | tokio::join!       | (no explicit)    | Promise.all       │
+// | select!            | select           | Promise.race      │
 // ============================================================
 
 // ============================================================
@@ -286,4 +326,5 @@ async fn main() {
 // 4. Implementasi retry logic: coba ulang operasi yang gagal
 //    (max 3 kali, dengan exponential backoff)
 // 5. Buat chat system sederhana menggunakan async channels
+// 6. Bandingkan waktu sequential vs concurrent untuk 10 operasi
 // ============================================================

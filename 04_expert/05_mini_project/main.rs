@@ -8,6 +8,16 @@
 // - File I/O, Serialization
 // - Module organization
 // - Pattern matching
+//
+// 🎯 Tujuan: Membuat aplikasi CLI lengkap yang menggabungkan
+//    semua konsep Rust dalam satu project nyata.
+//
+// 💡 Fitur Aplikasi:
+// - Tambah, hapus, edit, toggle todo
+// - Prioritas (Rendah/Sedang/Tinggi)
+// - Pencarian dan filter
+// - Penyimpanan ke file (persisten)
+// - Statistik progress
 // ============================================================
 
 use std::fmt;
@@ -465,4 +475,11 @@ fn main() {
 // - Rustlings (exercises): https://github.com/rust-lang/rustlings
 // - Exercism Rust Track: https://exercism.org/tracks/rust
 // - Crates.io: https://crates.io
+//
+// 💡 TIPS BELAJAR:
+// - Jangan buru-buru memahami semua konsep sekaligus
+// - Ownership & Borrowing adalah fondasi — kuasai dulu!
+// - Praktikkan dengan menulis kode, bukan hanya membaca
+// - Baca error message dengan cermat — compiler Rust sangat membantu
+// - Ikuti komunitas: Rust Indonesia, r/rust, Rust Discord
 // ============================================================

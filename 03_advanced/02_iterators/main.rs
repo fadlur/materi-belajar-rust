@@ -4,6 +4,19 @@
 // Iterator adalah pola untuk memproses sequence of items secara lazy.
 // "Lazy" artinya tidak dihitung sampai benar-benar dibutuhkan.
 // Iterator di Rust sangat powerful dan ZERO-COST (secepat manual loop).
+//
+// 🎯 Tujuan: Memahami trait Iterator, iterator adaptors,
+//    consuming adaptors, dan cara membuat custom iterator.
+//
+// 💡 Analogi Utama:
+// Iterator seperti PIPA AIR — air (data) mengalir melalui
+// serangkaian sambungan (adaptors): filter (saring), map (ubah),
+// collect (kumpulkan). Air tidak diproses sampai kamu buka
+// keran (consume) — itulah "lazy evaluation".
+//
+// 🔑 Iterator di Rust = zero-cost abstraction. Kode iterator
+//    di-compile menjadi loop manual yang sama cepatnya —
+//    bahkan lebih cepat karena compiler bisa melakukan optimasi!
 // ============================================================
 
 fn main() {
@@ -14,6 +27,10 @@ fn main() {
     //     type Item;
     //     fn next(&mut self) -> Option<Self::Item>;
     // }
+    //
+    // 💡 Analogi: Iterator seperti vending machine — setiap
+    //    tekan tombol (next()), keluar satu item. Kalau habis,
+    //    keluar "None" (kosong).
 
     let angka = vec![1, 2, 3, 4, 5];
 
@@ -247,11 +264,60 @@ impl Iterator for Fibonacci {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN ITERATOR:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    ITERATOR ADAPTORS (Lazy)                 │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ map              │ Transformasi setiap elemen               │
+// │ filter           │ Saring elemen berdasarkan kondisi        │
+// │ take(n)          │ Ambil n elemen pertama                   │
+// │ skip(n)          │ Lewati n elemen pertama                  │
+// │ enumerate        │ Tambahkan (index, value)                 │
+// │ zip              │ Gabungkan dua iterator                   │
+// │ flat_map         │ Map lalu flatten                         │
+// │ chain            │ Sambungkan dua iterator                  │
+// │ peekable         │ Intip tanpa consume                      │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    CONSUMING ADAPTORS                       │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ collect()        │ Kumpulkan ke collection                  │
+// │ sum()            │ Jumlahkan                                │
+// │ product()        │ Kalikan                                  │
+// │ count()          │ Hitung jumlah                            │
+// │ min/max          │ Nilai terkecil/terbesar                  │
+// │ fold()           │ Akumulasi dengan initial value           │
+// │ reduce()         │ Akumulasi tanpa initial value            │
+// │ any/all          │ Cek kondisi                              │
+// │ find/position    │ Cari elemen                              │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Lupa .collect() → iterator tidak dieksekusi (lazy!)
+// - Borrow error saat iterasi dan modifikasi bersamaan
+// - Infinite iterator tanpa take() → infinite loop!
+// - collect tanpa type annotation → compile error
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Python           | JavaScript        |
+// |-------------------|------------------|-------------------|
+// | .iter()           | iter()           | [Symbol.iterator] |
+// | .map()            | map()            | .map()            |
+// | .filter()         | filter()         | .filter()         |
+// | .collect()        | list()           | (spread)          |
+// | .fold()           | reduce()         | .reduce()         |
+// | .any()            | any()            | .some()           |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Gunakan iterator chain untuk: ambil angka 1-100, filter prima,
 //    ambil 10 pertama, jumlahkan
 // 2. Buat custom iterator `Range2D` yang iterasi atas (x, y) pairs
 // 3. Implementasikan `moving_average` menggunakan windows()
-// 4. Buat iterator yang menghasilkan kolasi Collatz sequence
+// 4. Buat iterator yang menghasilkan Collatz sequence
 // 5. Implementasikan `group_by` sederhana menggunakan fold()
+// 6. Buat iterator infinite untuk bilangan prima
 // ============================================================

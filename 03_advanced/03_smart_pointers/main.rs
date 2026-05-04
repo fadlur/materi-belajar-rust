@@ -8,6 +8,15 @@
 // - Box<T>    → alokasi di heap
 // - Rc<T>     → reference counting (multiple ownership)
 // - RefCell<T> → interior mutability (bypass borrow rules at runtime)
+//
+// 🎯 Tujuan: Memahami smart pointers dan kapan menggunakannya.
+//
+// 💡 Analogi Utama:
+// Smart pointers seperti RUMAH PINTAR — mereka punya fitur
+// tambahan di atas fungsi dasar (menunjuk ke data):
+// - Box = Rumah di kompleks apartemen (heap) — punya alamat tetap
+// - Rc  = Rumah dengan sistem counter penghuni — dihapus saat tidak ada penghuni
+// - RefCell = Rumah dengan kunci pintar — aturan akses dicek runtime
 // ============================================================
 
 use std::cell::RefCell;
@@ -23,6 +32,9 @@ fn main() {
     // 1. Data berukuran besar (hindari copy di stack)
     // 2. Tipe dengan ukuran tidak diketahui saat compile (recursive types)
     // 3. Transfer ownership tanpa copy data
+    //
+    // 💡 Analogi: Box seperti menyewa gudang (heap) untuk barang besar.
+    //    Kamu punya kunci (pointer di stack) yang menunjuk ke gudang.
 
     // ── Box dasar ───────────────────────────────────────────
     let b = Box::new(5);
@@ -36,8 +48,10 @@ fn main() {
     // ── Box untuk recursive types ───────────────────────────
     // Tanpa Box, compiler tidak tahu ukuran List (infinite size!)
     // enum List { Cons(i32, List), Nil } // ❌ ERROR! infinite size
-
-    // Dengan Box: pointer punya ukuran tetap (usize)
+    //
+    // 💡 Penjelasan: List mengandung List yang mengandung List...
+    //    Ukuran tidak terhingga! Box memecahkan ini karena pointer
+    //    punya ukuran tetap (usize) — data sebenarnya di heap.
     let list = List::Cons(
         1,
         Box::new(List::Cons(
@@ -49,6 +63,7 @@ fn main() {
     cetak_list(&list);
 
     // ── Box untuk trait objects ──────────────────────────────
+    // Vec<Box<dyn Trait>> memungkinkan heterogeneous collection
     let bentuk: Vec<Box<dyn Bentuk>> = vec![
         Box::new(Lingkaran { radius: 5.0 }),
         Box::new(Persegi { sisi: 4.0 }),
@@ -65,6 +80,10 @@ fn main() {
     // Rc<T> memungkinkan MULTIPLE OWNER untuk data yang sama
     // Data di-drop saat reference count = 0
     // ⚠️ Hanya untuk single-threaded! (untuk multi-thread, pakai Arc<T>)
+    //
+    // 💡 Analogi: Rc seperti rumah dengan sistem counter penghuni.
+    //    Setiap orang yang pindah masuk (clone) menambah counter.
+    //    Rumah dihancurkan saat counter = 0.
 
     // ── Masalah tanpa Rc ────────────────────────────────────
     // let a = List::Cons(5, Box::new(List::Cons(10, Box::new(List::Nil))));
@@ -100,6 +119,10 @@ fn main() {
     // RefCell memungkinkan MUTASI data meskipun reference immutable!
     // Borrow rules dicek saat RUNTIME (bukan compile time)
     // Jika dilanggar → PANIC!
+    //
+    // 💡 Analogi: RefCell seperti ruangan dengan kunci pintar.
+    //    Aturan borrowing tetap berlaku, tapi dicek saat kamu
+    //    masuk (runtime), bukan saat booking (compile time).
 
     // ── RefCell dasar ───────────────────────────────────────
     let data = RefCell::new(5);
@@ -276,10 +299,43 @@ impl Drop for Resource {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN SMART POINTERS:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    SMART POINTER COMPARISON                 │
+// ├──────────────────┬──────────────────┬───────────────────────┤
+// │                  │ Box<T>           │ Rc<T>    │ RefCell<T> │
+// ├──────────────────┼──────────────────┼──────────┼────────────┤
+// │ Ownership        │ Single           │ Multiple │ Single     │
+// │ Mutable?         │ Via mut          │ No       │ Yes (runtime)│
+// │ Borrow check     │ Compile          │ Compile  │ Runtime    │
+// │ Thread-safe      │ Yes              │ No       │ No         │
+// │ Multi-thread     │ Yes              │ Arc<T>   │ Arc<Mutex> │
+// │ Use case         │ Heap alloc       │ Graph    │ Interior mut│
+// └──────────────────┴──────────────────┴──────────┴────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Rc::clone() dikira deep copy → sebenarnya increment counter!
+// - RefCell borrow rules dilanggar → runtime panic
+// - Rc untuk multi-thread → compile error, gunakan Arc
+// - RefCell untuk multi-thread → compile error, gunakan Mutex
+// - Lupa Deref impl untuk custom smart pointer
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | C++              | Java              |
+// |-------------------|------------------|-------------------|
+// | Box<T>            | unique_ptr       | new Object()      |
+// | Rc<T>             | shared_ptr       | (GC-managed)      |
+// | RefCell<T>        | (no equivalent)  | (no equivalent)   |
+// | Arc<T>            | atomic_shared_ptr| (thread-safe ref) |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
-// 1. Buat binary tree menggunakan Box: enum Tree { Leaf(i32), Node(Box, Box) }
+// 1. Buat binary tree menggunakan Box: enum Tree { Leaf(i32), Node(Box<Tree>, Box<Tree>) }
 // 2. Implementasikan graph sederhana menggunakan Rc dan RefCell
 // 3. Buat cache sederhana menggunakan RefCell<HashMap<K, V>>
 // 4. Implementasi doubly-linked list dengan Rc<RefCell<Node>>
 // 5. Buat custom smart pointer yang logging setiap akses
+// 6. Bandingkan performa Box vs stack allocation untuk array besar
 // ============================================================

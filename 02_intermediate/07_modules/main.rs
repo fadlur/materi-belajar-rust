@@ -4,6 +4,18 @@
 // Module system Rust mengorganisir kode menjadi namespace.
 // Bisa nested, bisa di file terpisah.
 // Default: PRIVATE. Gunakan `pub` untuk membuat public.
+//
+// 🎯 Tujuan: Memahami sistem modul Rust, visibility rules,
+//    path resolution, use statements, dan re-export.
+//
+// 💡 Analogi Utama:
+// Module seperti LANTAI/LANTAI dalam gedung — setiap lantai
+// punya ruangan (items) yang bisa publik (lobby) atau privat
+// (ruang server). Tamu hanya bisa masuk ruang publik, tapi
+// penghuni lantai bisa akses semua ruangan di lantainya.
+//
+// 🔑 Di Rust, SEMUA item default private — harus eksplisit
+// diberi `pub` untuk bisa diakses dari luar module.
 // ============================================================
 
 // ── INLINE MODULE ───────────────────────────────────────────
@@ -16,7 +28,7 @@ mod restoran {
         println!("Selamat datang di Restoran Rust! 🦀");
     }
 
-    // Nested module
+    // Nested module — module di dalam module
     pub mod depan {
         pub fn terima_tamu() {
             println!("Silakan duduk!");
@@ -84,7 +96,7 @@ mod restoran {
 }
 
 // ── USE STATEMENT ───────────────────────────────────────────
-// `use` membawa item ke scope saat ini
+// `use` membawa item ke scope saat ini — seperti shortcut/alias.
 use restoran::depan;
 use restoran::belakang::siapkan_makanan;
 
@@ -122,8 +134,6 @@ mod matematika {
         }
 
         pub fn faktorial(n: u64) -> u64 {
-            // Akses item dari crate root menggunakan `crate::`
-            // atau dari parent module menggunakan `super::`
             match n {
                 0 | 1 => 1,
                 _ => n * faktorial(n - 1),
@@ -132,6 +142,7 @@ mod matematika {
     }
 
     // Re-export: buat item tersedia di level yang lebih tinggi
+    // Sekarang bisa akses matematika::tambah (tanpa dasar::)
     pub use dasar::tambah;
     pub use dasar::kurang;
 }
@@ -261,9 +272,34 @@ fn main() {
 }
 
 // ============================================================
-// CATATAN: Untuk project yang lebih besar, module biasanya
-// ditempatkan di file terpisah:
+// 🧠 RINGKUMAN MODULE SYSTEM:
 //
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    VISIBILITY RULES                         │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ pub              │ Public — bisa diakses dari mana saja     │
+// │ (default)        │ Private — hanya module dan children     │
+// │ pub(crate)       │ Hanya di crate ini                      │
+// │ pub(super)       │ Hanya parent module                     │
+// │ pub(in path)     │ Hanya di path tertentu                  │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    PATH RESOLUTION                          │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ crate::          │ Absolute path dari crate root           │
+// │ self::           │ Relative dari module saat ini           │
+// │ super::          │ Parent module                           │
+// │ ::               │ Crate root (external crate)             │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Lupa `pub` pada item yang perlu diakses luar → compile error
+// - Lupa `pub` pada field struct → field private
+// - Circular module dependency → compile error
+// - Path salah → "not found in this scope"
+//
+// 🔗 FILE STRUCTURE UNTUK PROJECT BESAR:
 // src/
 // ├── main.rs          (crate root)
 // ├── restoran.rs      (atau restoran/mod.rs)
@@ -285,4 +321,5 @@ fn main() {
 // 3. Re-export item dari nested module ke level yang lebih tinggi
 // 4. Buat module terpisah di file yang berbeda (opsional)
 // 5. Buat module `utils` dengan berbagai helper function
+// 6. Eksperimen dengan pub(crate) dan pub(super)
 // ============================================================

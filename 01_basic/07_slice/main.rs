@@ -5,6 +5,22 @@
 // berurutan (contiguous) dalam memori.
 // Slice TIDAK memiliki ownership — hanya meminjam.
 // Notasi: &[T] untuk slice of T, &str untuk string slice.
+//
+// 🎯 Tujuan: Memahami slice sebagai tipe data reference yang
+//    memungkinkan kita bekerja dengan sebagian koleksi tanpa
+//    mengambil ownership.
+//
+// 💡 Analogi Utama:
+// Slice seperti FOTO KOPI dari sebagian buku — kamu tidak
+// memiliki bukunya (ownership), tapi bisa melihat dan membaca
+// bagian tertentu. Foto kopi ini tidak bisa diubah (immutable)
+// kecuali kamu punya izin khusus (mutable slice).
+//
+// 🔑 Kenapa Slice Penting?
+// - Lebih fleksibel daripada array (tidak perlu ukuran tetap)
+// - Lebih aman daripada raw pointer (Rust jaga batasnya)
+// - Tidak mengambil ownership (tidak perlu move/clone)
+// - Bisa dipakai untuk array, Vec, dan String
 // ============================================================
 
 fn main() {
@@ -12,9 +28,12 @@ fn main() {
     let kalimat = String::from("Halo Dunia Rust");
 
     // &kalimat[start..end] — start inklusif, end eksklusif
-    let kata1 = &kalimat[0..4]; // "Halo"
-    let kata2 = &kalimat[5..10]; // "Dunia"
-    let kata3 = &kalimat[11..15]; // "Rust"
+    //
+    // 💡 Analogi: Slice seperti memotong roti — [0..4] artinya
+    //    mulai dari ujung kiri (0) sampai sebelum tanda 4.
+    let kata1 = &kalimat[0..4]; // indeks 0,1,2,3 → "Halo"
+    let kata2 = &kalimat[5..10]; // indeks 5,6,7,8,9 → "Dunia"
+    let kata3 = &kalimat[11..15]; // indeks 11,12,13,14 → "Rust"
     println!("{} {} {}", kata1, kata2, kata3);
 
     // Shorthand: jika mulai dari 0, bisa hilangkan angka pertama
@@ -26,7 +45,11 @@ fn main() {
     println!("{} | {} | {}", slice_awal, slice_akhir, slice_semua);
 
     // ⚠️ Hati-hati! Slice string berdasarkan BYTE, bukan karakter!
-    // Karakter Unicode bisa lebih dari 1 byte
+    // Karakter Unicode bisa lebih dari 1 byte.
+    //
+    // 💡 Penjelasan: Emoji 🦀 butuh 4 byte dalam UTF-8 encoding.
+    //    Kalau kita slice [0..2], kita memotong di tengah-tengah
+    //    byte emoji → PANIC! Rust melindungi kita dari data corrupt.
     let emoji = String::from("🦀 Rust");
     // let bad_slice = &emoji[0..2]; // ❌ PANIC! 🦀 butuh 4 byte
     let good_slice = &emoji[0..4]; // ✅ "🦀" (4 bytes)
@@ -34,10 +57,19 @@ fn main() {
 
     // ── STRING LITERAL ADALAH SLICE ─────────────────────────
     // String literal (&str) sudah berupa slice yang menunjuk ke binary
+    // String literal disimpan di read-only memory program —
+    // punya lifetime 'static (hidup selamanya selama program berjalan).
     let literal: &str = "Aku adalah string literal"; // tipe: &str
     println!("{}", literal);
 
     // ── FUNGSI DENGAN STRING SLICE ──────────────────────────
+    // &str lebih fleksibel dari &String — bisa terima keduanya!
+    //
+    // 💡 Kenapa &str lebih baik sebagai parameter?
+    //   1. Bisa menerima &String (auto-coerce)
+    //   2. Bisa menerima string literal (&str langsung)
+    //   3. Tidak mengambil ownership
+    //   4. Lebih umum dan fleksibel
     let teks = String::from("Selamat Pagi Dunia");
     let kata_pertama = cari_kata_pertama(&teks);
     println!("Kata pertama: {}", kata_pertama);
@@ -51,7 +83,7 @@ fn main() {
     let angka = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
     // Slice dari array
-    let sebagian = &angka[2..5]; // [3, 4, 5]
+    let sebagian = &angka[2..5]; // indeks 2,3,4 → [3, 4, 5]
     println!("Sebagian: {:?}", sebagian);
 
     let awal = &angka[..3]; // [1, 2, 3]
@@ -59,6 +91,7 @@ fn main() {
     println!("Awal: {:?}, Akhir: {:?}", awal, akhir);
 
     // ── MUTABLE SLICE (&mut [T]) ────────────────────────────
+    // Mutable slice memungkinkan kita mengubah elemen di dalam slice
     let mut data = [10, 20, 30, 40, 50];
     println!("Sebelum: {:?}", data);
     gandakan_slice(&mut data[1..4]); // ubah elemen index 1-3
@@ -87,15 +120,18 @@ fn main() {
     for chunk in data2.chunks(3) {
         println!("Chunk: {:?}", chunk);
     }
+    // Output: [1, 2, 3], [4, 5, 6], [7, 8]
 
     // windows: sliding window berukuran n
     for window in data2.windows(3) {
         println!("Window: {:?}", window);
     }
+    // Output: [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6], ...
 
-    // split_at: bagi menjadi dua slice
+    // split_at: bagi menjadi dua slice di index tertentu
     let (kiri, kanan) = data2.split_at(4);
     println!("Kiri: {:?}, Kanan: {:?}", kiri, kanan);
+    // Kiri: [1, 2, 3, 4], Kanan: [5, 6, 7, 8]
 
     // ── SLICE METHODS ───────────────────────────────────────
     let nums = [5, 2, 8, 1, 9, 3];
@@ -108,6 +144,10 @@ fn main() {
 
 // ── FUNGSI YANG MENERIMA STRING SLICE ───────────────────────
 // &str lebih fleksibel dari &String — bisa terima keduanya
+//
+// 💡 Best Practice: Selalu gunakan &str untuk parameter fungsi
+//    yang hanya perlu membaca string. Ini membuat fungsi kamu
+//    lebih fleksibel dan tidak mengambil ownership.
 fn cari_kata_pertama(s: &str) -> &str {
     let bytes = s.as_bytes();
 
@@ -133,6 +173,52 @@ fn gandakan_slice(slice: &mut [i32]) {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN SLICE:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    SLICE DI RUST                            │
+// ├──────────────┬──────────────────────────────────────────────┤
+// │ &str         │ String slice — reference ke data string      │
+// │              │ Bisa dari String, string literal, atau slice │
+// ├──────────────┼──────────────────────────────────────────────┤
+// │ &[T]         │ Array/Vec slice — reference ke sebagian      │
+// │              │ atau seluruh array/Vec                       │
+// ├──────────────┼──────────────────────────────────────────────┤
+// │ &mut [T]     │ Mutable slice — bisa mengubah elemen         │
+// ├──────────────┼──────────────────────────────────────────────┤
+// │ start..end   │ Range eksklusif (end tidak termasuk)         │
+// │ start..=end  │ Range inklusif (end termasuk)                │
+// │ ..end        │ Dari awal sampai end                         │
+// │ start..      │ Dari start sampai akhir                      │
+// │ ..           │ Seluruh koleksi                              │
+// └──────────────┴──────────────────────────────────────────────┘
+//
+// 💡 Kenapa &str lebih baik daripada &String?
+//   ┌────────────────┬─────────────────┬──────────────────────┐
+//   │ Parameter      │ Terima &String? │ Terima "literal"?    │
+//   ├────────────────┼─────────────────┼──────────────────────┤
+//   │ s: String      │ ✅ (move)       │ ✅ (auto buat String)│
+//   │ s: &String     │ ✅ (reference)  │ ❌ (tidak bisa)      │
+//   │ s: &str        │ ✅ (auto coerce)│ ✅ (langsung)        │
+//   └────────────────┴─────────────────┴──────────────────────┘
+//   &str adalah pilihan TERBAIK untuk parameter read-only!
+//
+// ⚠️ COMMON MISTAKES:
+// - Slice string di tengah karakter multi-byte → PANIC!
+// - Lupa & saat membuat slice → compile error
+// - Slice melebihi batas array → PANIC saat runtime
+// - Mengubah slice immutable → compile error
+//
+// 🔗 PERBANDINGAN:
+// | Rust          | Python           | JavaScript        |
+// |---------------|------------------|-------------------|
+// | &s[0..4]      | s[0:4]           | s.slice(0,4)      |
+// | &s[..]        | s[:]             | s.slice()         |
+// | &s[..4]       | s[:4]            | s.slice(0,4)      |
+// | &mut v[1..3]  | v[1:3] = [...]   | v.splice(1,2,...) |
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Buat fungsi yang menerima &str dan return kata terakhir
 // 2. Buat fungsi yang menerima &[i32] dan return elemen terbesar
@@ -141,4 +227,5 @@ fn gandakan_slice(slice: &mut [i32]) {
 //    (misal bahasa Jepang/Arab) — lihat apa yang terjadi
 // 5. Buat fungsi split sederhana yang menerima &str dan char delimiter,
 //    return Vec<&str>
+// 6. Gunakan windows() untuk menghitung moving average
 // ============================================================

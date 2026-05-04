@@ -13,6 +13,16 @@
 // 3. Akses/modify mutable static variable
 // 4. Implement unsafe trait
 // 5. Akses field dari union
+//
+// 🎯 Tujuan: Memahami kapan dan bagaimana menggunakan unsafe
+//    dengan benar, serta cara membuat safe abstraction di atasnya.
+//
+// 💡 Analogi Utama:
+// Safe Rust seperti mengemudi dengan autopilot — sistem
+//    mengontrol hampir semuanya. Unsafe Rust seperti mengemudi
+//    manual — kamu punya kontrol penuh, tapi kesalahan bisa
+//    fatal. Tujuannya: gunakan manual hanya saat perlu,
+//    dan selalu bungkus dengan safety features.
 // ============================================================
 
 use std::slice;
@@ -261,20 +271,44 @@ fn main() {
 }
 
 // ============================================================
-// 📝 KAPAN PAKAI UNSAFE?
+// 🧠 RINGKUMAN UNSAFE:
 //
-// ✅ PERLU:
-// - FFI (memanggil kode C/C++)
-// - Optimisasi kritis yang compiler tidak bisa lakukan
-// - Implementasi data structure low-level (allocator, lock-free)
-// - Hardware access / embedded systems
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    5 HAL YANG HANYA BISA DI UNSAFE          │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Raw pointers     │ *const T, *mut T — tidak ada borrow check│
+// │ Unsafe functions │ Fungsi yang mungkin tidak aman           │
+// │ Mutable static   │ static mut — rentan race condition       │
+// │ Unsafe trait     │ Invariant harus dijamin manual           │
+// │ Union fields     │ Akses field union (like C union)         │
+// └──────────────────┴──────────────────────────────────────────┘
 //
-// ❌ HINDARI:
-// - "Saya malas handle borrow checker" — perbaiki desain!
-// - Performance premature optimization
-// - Meniru pattern dari C/C++ tanpa alasan kuat
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    KAPAN PAKAI UNSAFE?                      │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ ✅ PERLU         │ FFI, optimisasi kritis, low-level DS     │
+// │                  │ hardware access, allocator custom        │
+// ├──────────────────┼──────────────────────────────────────────┤
+// │ ❌ HINDARI       │ "Malas handle borrow checker"            │
+// │                  │ Premature optimization                   │
+// │                  │ Meniru pattern C tanpa alasan            │
+// └──────────────────┴──────────────────────────────────────────┘
 //
-// Rule: Jika bisa safe, SELALU gunakan safe Rust.
+// ⚠️ COMMON MISTAKES:
+// - unsafe block terlalu besar → sulit debug
+// - Tidak validasi input sebelum unsafe operation
+// - Data race dengan mutable static
+// - Dereference null/invalid raw pointer → segfault
+// - Lupa invariant pada unsafe trait
+//
+// 🔗 PERBANDINGAN:
+// | Rust (unsafe)     | C/C++          | Rust (safe)       |
+// |-------------------|----------------|-------------------|
+// | *const T          | const T*       | &T                │
+// | *mut T            | T*             | &mut T            │
+// | unsafe fn         | (semua fn)     | fn (safe)         │
+// | static mut        | global var     │ Mutex/Atomic      │
+// | FFI               │ (native)       │ (wrapper)         │
 // ============================================================
 
 // ============================================================
@@ -286,4 +320,5 @@ fn main() {
 //    (hanya untuk tipe yang ukurannya sama)
 // 5. Buat benchmark: bandingkan bounds-checked vs unchecked
 //    array access (get() vs get_unchecked())
+// 6. Tulis unsafe trait dengan invariant yang jelas
 // ============================================================

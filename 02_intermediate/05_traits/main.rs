@@ -4,12 +4,30 @@
 // Trait adalah kontrak/interface: "tipe ini bisa melakukan X".
 // Mirip interface di Java/Go, atau typeclass di Haskell.
 // Trait adalah cara Rust melakukan polymorphism.
+//
+// 🎯 Tujuan: Memahami definisi trait, implementasi, trait bounds,
+//    dynamic dispatch, dan berbagai pola trait di Rust.
+//
+// 💡 Analogi Utama:
+// Trait seperti SERTIFIKAT atau LISENSI. Kalau seseorang punya
+// sertifikat "Bisa Mengemudi", kita tahu dia bisa menyetir
+// meskipun tidak tahu detail mobil apa yang dia punya.
+//
+// Di Rust, trait mendefinisikan KEMAMPUAN — mirip superhero
+// yang punya kekuatan khusus. Setiap tipe bisa "memiliki"
+// berbagai trait (kekuatan) sesuai kebutuhan.
 // ============================================================
 
 use std::fmt;
 
 // ── MENDEFINISIKAN TRAIT ────────────────────────────────────
 // Trait mendeklarasikan method yang HARUS diimplementasikan
+// oleh tipe yang mengadopsi trait tersebut.
+//
+// 💡 Analogi: Trait seperti daftar kemampuan yang harus dimiliki.
+//    Kalau mau jadi "Dokter", harus bisa: diagnosa, resep obat,
+//    operasi (opsional). Yang wajib = abstract method,
+//    yang opsional = default implementation.
 trait Ringkasan {
     // Method yang harus diimplementasikan (abstract)
     fn ringkasan(&self) -> String;
@@ -61,11 +79,16 @@ impl Ringkasan for Tweet {
 
 // ── TRAIT SEBAGAI PARAMETER ─────────────────────────────────
 // Cara 1: `impl Trait` syntax (sugar syntax, paling umum)
+//
+// 💡 Analogi: Fungsi ini bilang "saya menerima sesuatu yang
+//    bisa diringkas" — tidak peduli apakah Artikel, Tweet, atau
+//    tipe lain yang implement Ringkasan.
 fn cetak_ringkasan(item: &impl Ringkasan) {
     println!("Preview: {}", item.preview());
 }
 
 // Cara 2: Trait bound syntax (lebih eksplisit)
+// <T: Ringkasan> artinya T harus implement trait Ringkasan
 fn cetak_ringkasan2<T: Ringkasan>(item: &T) {
     println!("Ringkasan: {}", item.ringkasan());
 }
@@ -86,6 +109,7 @@ where
 
 // ── RETURN `impl Trait` ─────────────────────────────────────
 // Fungsi bisa return tipe yang implement trait tertentu
+// tanpa perlu menyebutkan tipe konkretnya.
 fn buat_tweet_default() -> impl Ringkasan {
     Tweet {
         username: String::from("bot"),
@@ -172,6 +196,7 @@ impl Bangun2D for Segitiga {
 
 // ── IMPLEMENT STANDARD LIBRARY TRAITS ───────────────────────
 // Rust punya banyak trait bawaan yang bisa kita implement
+// untuk tipe custom kita.
 
 struct Rupiah(f64);
 
@@ -198,6 +223,10 @@ impl PartialEq for Rupiah {
 
 // ── DERIVE MACRO ────────────────────────────────────────────
 // #[derive(...)] otomatis generate implementasi trait standar
+//
+// 💡 Analogi: derive seperti "paket hemat" — otomatis dapat
+//    beberapa kemampuan tanpa harus tulis manual satu per satu.
+//    Hanya untuk trait standar yang compiler bisa generate.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 struct Nilai {
     skor: f64,
@@ -205,7 +234,7 @@ struct Nilai {
 }
 
 // ── TRAIT INHERITANCE (SUPERTRAIT) ──────────────────────────
-// Trait bisa "mewarisi" trait lain
+// Trait bisa "mewarisi" trait lain — untuk menggabungkan kemampuan.
 trait Printable: fmt::Display + fmt::Debug {
     fn cetak(&self) {
         println!("Display: {}", self);
@@ -286,6 +315,38 @@ fn main() {
     println!("n1 == n2? {}", n1 == n2); // PartialEq trait
     println!("{:?}", n1); // Debug trait
 }
+
+// ============================================================
+// 🧠 RINGKUMAN TRAIT:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    KONSEP TRAIT                             │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Definisi         │ trait Nama { fn method(&self); }         │
+// │ Implementasi     │ impl Trait for Tipe { ... }              │
+// │ Parameter        │ fn f(item: &impl Trait)                  │
+// │ Generic Bound    │ fn f<T: Trait>(item: &T)                 │
+// │ Multiple Bounds  │ T: TraitA + TraitB                       │
+// │ Where Clause     │ fn f<T>(x: T) where T: Trait             │
+// │ Return Trait     │ fn f() -> impl Trait                     │
+// │ Default Method   │ fn method(&self) { ... } dalam trait     │
+// │ Supertrait       │ trait Sub: Super { ... }                 │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ COMMON MISTAKES:
+// - Implement trait tanpa semua method wajib → compile error
+// - Lupa `&` saat pass by reference ke trait parameter
+// - Trait bound tidak terpenuhi → compile error
+// - Orphan rule: tidak bisa impl trait asing untuk tipe asing
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Java             | Go                |
+// |-------------------|------------------|-------------------|
+// | trait             | interface        | interface         |
+// | impl Trait for T  | implements       | (implicit)        |
+// | dyn Trait         | interface object │ interface value   |
+// | derive            | (Lombok)         │ (struct tags)     |
+// ============================================================
 
 // ============================================================
 // 🏋️ LATIHAN:

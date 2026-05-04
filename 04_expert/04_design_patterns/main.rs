@@ -6,6 +6,15 @@
 // - Tidak ada inheritance (composition > inheritance)
 // - Ownership system mempengaruhi desain
 // - Trait-based polymorphism
+//
+// 🎯 Tujuan: Memahami design patterns populer dan cara
+//    mengimplementasikannya di Rust secara idiomatic.
+//
+// 💡 Analogi Utama:
+// Design patterns seperti RESEP ARSITEKTUR — bukan blueprint
+//    detail, tapi panduan umum untuk masalah umum. Rust punya
+//    "bahan bangunan" berbeda (ownership, traits, enums), jadi
+//    resepnya sedikit berbeda dari bahasa OOP tradisional.
 // ============================================================
 
 use std::collections::HashMap;
@@ -456,6 +465,41 @@ fn main() {
 }
 
 // ============================================================
+// 🧠 RINGKUMAN DESIGN PATTERNS DI RUST:
+//
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    PATTERN YANG UMUM                        │
+// ├──────────────────┬──────────────────────────────────────────┤
+// │ Builder          │ Struct terpisah + method chaining        │
+// │ Newtype          │ Wrapper struct untuk type safety         │
+// │ State Machine    │ Enum untuk state + match untuk transisi  │
+// │ Strategy         │ Trait + Box<dyn Trait>                   │
+// │ Observer         │ HashMap<String, Vec<closure>>            │
+// │ Repository       │ Trait + impl (bisa ganti storage)        │
+// │ Singleton        │ lazy_static / OnceCell / OnceLock        │
+// │ Factory          │ fn/impl yang return Box<dyn Trait>       │
+// │ Command          │ Enum dengan data + method execute        │
+// │ Decorator        │ Wrapper struct + Deref                   │
+// └──────────────────┴──────────────────────────────────────────┘
+//
+// ⚠️ PERBEDAAN DENGAN OOP TRADISIONAL:
+// - Composition over inheritance → trait + struct
+// - No null → Option<T>
+// - Error handling → Result<T, E>
+// - Ownership affects design → borrow checker
+// - Pattern matching → match + enum
+//
+// 🔗 PERBANDINGAN:
+// | Rust              | Java             | Go                |
+// |-------------------|------------------|-------------------|
+// | trait + struct    | interface + class│ interface + struct│
+// | Box<dyn Trait>    | new Class()      │ interface value   │
+// | enum state        | class state      │ interface + type  │
+// | closure           │ lambda           │ func value        │
+// | match             │ switch           │ switch            │
+// ============================================================
+
+// ============================================================
 // 🏋️ LATIHAN:
 // 1. Implementasikan Command pattern (undo/redo) untuk text editor
 // 2. Buat Factory pattern untuk membuat berbagai jenis report
@@ -463,4 +507,5 @@ fn main() {
 // 4. Buat Singleton pattern yang thread-safe (gunakan OnceCell/OnceLock)
 // 5. Implementasikan Decorator pattern untuk menambah logging
 //    pada fungsi yang sudah ada
+// 6. Buat Visitor pattern menggunakan enum dan match
 // ============================================================
